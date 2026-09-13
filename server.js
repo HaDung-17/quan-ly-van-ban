@@ -3,17 +3,14 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', true);
 
-// Cấu hình middleware để đọc dữ liệu JSON và phục vụ file tĩnh
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Các đường dẫn tới file dữ liệu JSON
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-const DOCUMENTS_FILE = path.join(__dirname, 'data', 'documents.json');
 
-// Hàm bổ trợ đọc file JSON an toàn
 const readJsonFile = (filePath) => {
     try {
         if (!fs.existsSync(filePath)) return [];
@@ -25,7 +22,6 @@ const readJsonFile = (filePath) => {
     }
 };
 
-// Hàm bổ trợ ghi file JSON an toàn
 const writeJsonFile = (filePath, data) => {
     try {
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
@@ -36,14 +32,36 @@ const writeJsonFile = (filePath, data) => {
     }
 };
 
-// API lấy danh sách người dùng (Cache-busting enabled)
-app.get('/api/admin/users', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+// API Đăng ký (Tài khoản đầu tiên tự động thành Admin)
+app.post('/api/register', (req, res) => {
+    const { username, password, fullname } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin.' });
+    }
+
     const users = readJsonFile(USERS_FILE);
-    res.json(users);
+    if (users.find(u => u.username === username)) {
+        return res.status(400).json({ message: 'Tên đăng nhập đã tồn tại.' });
+    }
+
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip;
+
+    const newUser = {
+        id: Date.now().toString(),
+        username,
+        password,
+        fullname: fullname || username,
+        role: users.length === 0 ? 'admin' : 'user',
+        ip: clientIp,
+        createdAt: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    writeJsonFile(USERS_FILE, users);
+    res.json({ message: 'Đăng ký thành công!', user: newUser });
 });
 
-// API Đăng nhập / Đăng ký cơ bản
+// API Đăng nhập
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const users = readJsonFile(USERS_FILE);
@@ -53,13 +71,36 @@ app.post('/api/login', (req, res) => {
         if (user.blocked) {
             return res.status(403).json({ message: 'Tài khoản đã bị khóa.' });
         }
+        const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip;
+        user.lastIp = clientIp;
+        writeJsonFile(USERS_FILE, users);
         res.json({ message: 'Đăng nhập thành công', user });
     } else {
         res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
     }
 });
 
-// Cấu hình Cổng và IP để Render có thể kết nối ra mạng ngoài
+// API Lấy danh sách thành viên
+app.get('/api/admin/users', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.json(readJsonFile(USERS_FILE));
+});
+
+// API Thay đổi quyền Admin / User trực tiếp trên App
+app.post('/api/admin/change-role', (req, res) => {
+    const { userId, newRole } = req.body;
+    const users = readJsonFile(USERS_FILE);
+    const user = users.find(u => u.id === userId);
+
+    if (!user) {
+        return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+    }
+
+    user.role = newRole;
+    writeJsonFile(USERS_FILE, users);
+    res.json({ message: `Đã cập nhật quyền thành ${newRole}`, users });
+});
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server Sư đoàn 307 đang chạy tại cổng: ${PORT}`);
