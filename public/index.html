@@ -291,7 +291,7 @@
         }
     </style>
 
-    <!-- ICON WEB DÀNH CHO BÀN PHÍM/HOME SCREEN -->
+    <!-- ICON WEB -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
 </head>
@@ -381,17 +381,18 @@
             <div class="card" style="padding: 0; overflow: hidden;">
                 <table>
                     <thead>
-                        <tr>
+                        <tr id="doc-table-header">
                             <th style="width: 15%;">Số / Ký hiệu</th>
-                            <th style="width: 40%;">Trích yếu nội dung</th>
+                            <th style="width: 35%;">Trích yếu nội dung</th>
                             <th style="width: 20%;">Thuộc đơn vị/cơ quan</th>
                             <th style="width: 15%;">Ngày phát hành</th>
                             <th style="width: 10%;">Tệp văn bản</th>
+                            <th id="th-action" class="hidden" style="width: 5%;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="doc-table-body">
                         <tr>
-                            <td colspan="5" class="empty-msg">Chưa có văn bản nào trong mục này.</td>
+                            <td colspan="6" class="empty-msg">Chưa có văn bản nào trong mục này.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -521,6 +522,7 @@
         if (currentUser.role === 'admin') {
             document.getElementById('add-doc-section').classList.remove('hidden');
             document.getElementById('btn-admin-tab').classList.remove('hidden');
+            document.getElementById('th-action').classList.remove('hidden');
             loadUsers();
         }
     }
@@ -642,7 +644,8 @@
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Chưa có văn bản nào trong mục này.</td></tr>';
+            const colSpanVal = (currentUser && currentUser.role === 'admin') ? 6 : 5;
+            tbody.innerHTML = `<tr><td colspan="${colSpanVal}" class="empty-msg">Chưa có văn bản nào trong mục này.</td></tr>`;
             return;
         }
 
@@ -651,6 +654,11 @@
             let deptLabel = d.subCategory;
             if (d.childCategory) deptLabel += ` - ${d.childCategory}`;
 
+            let actionTd = '';
+            if (currentUser && currentUser.role === 'admin') {
+                actionTd = `<td><button class="btn-action-sm" style="background:#dc3545;" onclick="deleteDocument('${d.id}', '${d.docNumber}')">Xóa</button></td>`;
+            }
+
             tbody.innerHTML += `
                 <tr>
                     <td><b>${d.docNumber}</b></td>
@@ -658,6 +666,7 @@
                     <td>${deptLabel}</td>
                     <td>${dateStr}</td>
                     <td><a href="${d.link}" target="_blank" style="color: var(--military-red); font-weight: bold; text-decoration: none;">Xem tệp</a></td>
+                    ${actionTd}
                 </tr>
             `;
         });
@@ -688,6 +697,18 @@
             document.getElementById('doc-link').value = '';
             loadDocuments();
         }
+    }
+
+    async function deleteDocument(docId, docNumber) {
+        if (!confirm(`Bạn có chắc chắn muốn XÓA văn bản số "${docNumber}" khỏi hệ thống không?`)) return;
+        const res = await fetch('/api/admin/delete-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ docId })
+        });
+        const data = await res.json();
+        alert(data.message);
+        if (res.ok) loadDocuments();
     }
 
     function switchView(viewName) {
