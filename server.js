@@ -144,12 +144,13 @@ app.post('/api/admin/delete-user', (req, res) => {
     }
 });
 
-// API Văn bản
+// API Lấy danh sách văn bản
 app.get('/api/documents', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(DOCUMENTS_FILE));
 });
 
+// API Thêm văn bản
 app.post('/api/documents', (req, res) => {
     const { title, docNumber, category, subCategory, childCategory, link } = req.body;
     if (!title || !docNumber) return res.status(400).json({ message: 'Thiếu thông tin văn bản.' });
@@ -169,6 +170,21 @@ app.post('/api/documents', (req, res) => {
     docs.push(newDoc);
     writeJsonFile(DOCUMENTS_FILE, docs);
     res.json({ message: 'Thêm văn bản thành công!', doc: newDoc });
+});
+
+// API Admin xóa văn bản
+app.post('/api/admin/delete-document', (req, res) => {
+    const { docId } = req.body;
+    let docs = readJsonFile(DOCUMENTS_FILE);
+    const initialLength = docs.length;
+    docs = docs.filter(d => d.id !== docId);
+
+    if (docs.length < initialLength) {
+        writeJsonFile(DOCUMENTS_FILE, docs);
+        res.json({ message: 'Đã xóa văn bản thành công.' });
+    } else {
+        res.status(404).json({ message: 'Không tìm thấy văn bản để xóa.' });
+    }
 });
 
 const PORT = process.env.PORT || 10000;
