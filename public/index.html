@@ -272,15 +272,6 @@
             font-style: italic;
         }
     </style>
-    }
-    </style>
-
-    <!-- Chèn 2 dòng icon vào đây -->
-    <link rel="icon" type="image/png" href="https://drive.google.com/file/d/1KTHtnYQ6PT3IMe-wd1wTiCAtxp4uZrpC/view?usp=drive_link">
-    <link rel="apple-touch-icon" href="https://drive.google.com/file/d/1KTHtnYQ6PT3IMe-wd1wTiCAtxp4uZrpC/view?usp=drive_link">
-
-</head>
-<body>
 </head>
 <body>
 
@@ -383,7 +374,7 @@
             </div>
         </div>
 
-        <!-- KHU VỰC QUẢN TRỊ VIÊN -->
+        <!-- KHU VỰC QUẢN TRỊ VIÊN (HIỂN THỊ CẢ NHỮNG TÀI KHOẢN ĐÃ TỪNG ĐĂNG NHẬP) -->
         <div id="view-admin" class="card hidden">
             <div class="card-title" style="justify-content: space-between;">
                 <span>👥 QUẢN LÝ THÀNH VIÊN & NHẬT KÝ ĐỊNH VỊ IP/GPS</span>
@@ -395,7 +386,7 @@
                         <th>Tên Đăng Nhập</th>
                         <th>Họ Tên Quân Nhân</th>
                         <th>Chức Vụ</th>
-                        <th>IP Đăng Nhập</th>
+                        <th>IP & Thời Gian Đăng Nhập Gần Nhất</th>
                         <th>Vị Trí / Tọa Độ thực tế</th>
                         <th>Thao Tác Admin</th>
                     </tr>
@@ -630,6 +621,11 @@
         const tbody = document.getElementById('user-table-body');
         tbody.innerHTML = '';
 
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">Chưa có dữ liệu thành viên.</td></tr>';
+            return;
+        }
+
         users.forEach(u => {
             const isSelf = u.id === currentUser.id;
             const roleBtn = u.role === 'admin' 
@@ -638,17 +634,19 @@
 
             const resetPwdBtn = `<button class="btn-action-sm" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
 
-            let locDisplay = u.location || 'N/A';
+            let locDisplay = u.location || 'Chưa xác định';
             if (locDisplay.includes('http')) {
                 locDisplay = `<a href="${locDisplay.split(' (')[1].replace(')', '')}" target="_blank" style="color: var(--military-red); font-weight: bold;">Mở Google Maps</a>`;
             }
 
+            const lastLogin = u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('vi-VN') : 'Chưa đăng nhập';
+
             tbody.innerHTML += `
                 <tr>
-                    <td>${u.username}</td>
+                    <td><b>${u.username}</b></td>
                     <td>${u.fullname || '-'}</td>
                     <td><b style="color: ${u.role === 'admin' ? 'red' : 'green'};">${u.role}</b></td>
-                    <td>${u.lastIp || u.ip || 'N/A'}</td>
+                    <td>${u.lastIp || u.ip || 'N/A'}<br><small style="color:#666;">Lần cuối: ${lastLogin}</small></td>
                     <td>${locDisplay}</td>
                     <td>${roleBtn} ${resetPwdBtn}</td>
                 </tr>
