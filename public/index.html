@@ -6,9 +6,9 @@
     <title>Quản Lý Văn Bản - Sư Đoàn 307</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
-        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        input, button { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        input, button, select { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; }
         button { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
         button:hover { background-color: #0056b3; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -16,6 +16,7 @@
         th { background-color: #f2f2f2; }
         .btn-action { width: auto; padding: 5px 8px; font-size: 12px; margin-right: 3px; }
         .admin-badge { color: red; font-weight: bold; }
+        .card { background: #fafafa; border: 1px solid #eee; padding: 15px; margin-top: 20px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -35,15 +36,43 @@
         </p>
     </div>
 
-    <!-- Màn hình sau khi đăng nhập -->
+    <!-- Màn hình chính sau khi đăng nhập -->
     <div id="main-box" class="hidden">
-        <h3>Xin chào: <span id="user-display"></span> (<span id="role-display"></span>)</h3>
-        <button onclick="logout()" style="background-color: #dc3545; width: auto;">Đăng xuất</button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Xin chào: <span id="user-display"></span> (<span id="role-display"></span>)</h3>
+            <button onclick="logout()" style="background-color: #dc3545; width: auto;">Đăng xuất</button>
+        </div>
 
-        <!-- Khu vực Quản lý Thành viên cho Admin -->
-        <div id="admin-section" class="hidden">
-            <hr>
-            <h4>Danh Sách Thành Viên & Quản Lý Quyền / Mật Khẩu</h4>
+        <!-- MỤC 1: HỆ THỐNG QUẢN LÝ VĂN BẢN -->
+        <div class="card">
+            <h3>Danh Sách Văn Bản Sư Đoàn</h3>
+            
+            <!-- Form Thêm văn bản cho Admin -->
+            <div id="add-doc-section" class="hidden" style="margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 4px;">
+                <h4>Thêm Văn Bản Mới</h4>
+                <input type="text" id="doc-number" placeholder="Số / Ký hiệu văn bản">
+                <input type="text" id="doc-title" placeholder="Tên / Trích yếu văn bản">
+                <input type="text" id="doc-category" placeholder="Loại văn bản (Chỉ thị, Nghị quyết...)">
+                <input type="text" id="doc-link" placeholder="Đường link tệp (Google Drive / PDF)">
+                <button onclick="addDocument()" style="background-color: #28a745;">Lưu Văn Bản</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Số / Ký Hiệu</th>
+                        <th>Trích Yếu Văn Bản</th>
+                        <th>Loại</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="doc-table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- MỤC 2: QUẢN LÝ THÀNH VIÊN & IP/VỊ TRÍ (CHỈ ADMIN THẤY) -->
+        <div id="admin-section" class="card hidden">
+            <h4>Danh Sách Thành Viên & Định Vị IP/GPS (Admin)</h4>
             <table>
                 <thead>
                     <tr>
@@ -51,7 +80,8 @@
                         <th>Họ Tên</th>
                         <th>Chức Vụ</th>
                         <th>IP Đăng Nhập</th>
-                        <th>Thao Tác Admin</th>
+                        <th>Vị Trí / Toạ Độ</th>
+                        <th>Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody id="user-table-body"></tbody>
@@ -63,6 +93,19 @@
 <script>
     let isRegisterMode = false;
     let currentUser = null;
+    let currentLat = null;
+    let currentLon = null;
+
+    // Lấy tọa độ GPS trình duyệt nếu người dùng cho phép
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                currentLat = pos.coords.latitude;
+                currentLon = pos.coords.longitude;
+            },
+            (err) => console.log('Không lấy được GPS, chuyển sang tra cứu IP')
+        );
+    }
 
     function toggleMode() {
         isRegisterMode = !isRegisterMode;
@@ -78,7 +121,9 @@
         const fullname = document.getElementById('fullname').value;
 
         const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-        const payload = isRegisterMode ? { username, password, fullname } : { username, password };
+        const payload = isRegisterMode 
+            ? { username, password, fullname } 
+            : { username, password, lat: currentLat, lon: currentLon };
 
         const res = await fetch(endpoint, {
             method: 'POST',
@@ -105,9 +150,58 @@
         document.getElementById('user-display').innerText = currentUser.fullname || currentUser.username;
         document.getElementById('role-display').innerText = currentUser.role;
 
+        loadDocuments();
+
         if (currentUser.role === 'admin') {
             document.getElementById('admin-section').classList.remove('hidden');
+            document.getElementById('add-doc-section').classList.remove('hidden');
             loadUsers();
+        }
+    }
+
+    async function loadDocuments() {
+        const res = await fetch('/api/documents');
+        const docs = await res.json();
+        const tbody = document.getElementById('doc-table-body');
+        tbody.innerHTML = '';
+
+        if (docs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Chưa có văn bản nào.</td></tr>';
+            return;
+        }
+
+        docs.forEach(d => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${d.docNumber}</b></td>
+                    <td>${d.title}</td>
+                    <td>${d.category}</td>
+                    <td><a href="${d.link}" target="_blank"><button class="btn-action">Xem / Tải về</button></a></td>
+                </tr>
+            `;
+        });
+    }
+
+    async function addDocument() {
+        const docNumber = document.getElementById('doc-number').value;
+        const title = document.getElementById('doc-title').value;
+        const category = document.getElementById('doc-category').value;
+        const link = document.getElementById('doc-link').value;
+
+        const res = await fetch('/api/documents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ docNumber, title, category, link })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+        if (res.ok) {
+            document.getElementById('doc-number').value = '';
+            document.getElementById('doc-title').value = '';
+            document.getElementById('doc-category').value = '';
+            document.getElementById('doc-link').value = '';
+            loadDocuments();
         }
     }
 
@@ -119,14 +213,16 @@
 
         users.forEach(u => {
             const isSelf = u.id === currentUser.id;
-            
-            // Nút phân quyền
             const roleBtn = u.role === 'admin' 
-                ? `<button class="btn-action" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ xuống User</button>`
-                : `<button class="btn-action" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng làm Admin</button>`;
+                ? `<button class="btn-action" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ User</button>`
+                : `<button class="btn-action" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng Admin</button>`;
 
-            // Nút đổi mật khẩu
             const resetPwdBtn = `<button class="btn-action" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
+
+            let locDisplay = u.location || 'N/A';
+            if (locDisplay.includes('http')) {
+                locDisplay = `<a href="${locDisplay.split(' (')[1].replace(')', '')}" target="_blank">Xem trên Google Maps</a>`;
+            }
 
             tbody.innerHTML += `
                 <tr>
@@ -134,6 +230,7 @@
                     <td>${u.fullname || '-'}</td>
                     <td><span class="${u.role === 'admin' ? 'admin-badge' : ''}">${u.role}</span></td>
                     <td>${u.lastIp || u.ip || 'N/A'}</td>
+                    <td>${locDisplay}</td>
                     <td>${roleBtn}${resetPwdBtn}</td>
                 </tr>
             `;
@@ -141,29 +238,25 @@
     }
 
     async function changeRole(userId, newRole) {
-        if (!confirm(`Xác nhận chuyển quyền tài khoản này thành ${newRole}?`)) return;
-
+        if (!confirm(`Chuyển quyền thành ${newRole}?`)) return;
         const res = await fetch('/api/admin/change-role', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, newRole })
         });
-
         const data = await res.json();
         alert(data.message);
         if (res.ok) loadUsers();
     }
 
     async function resetPassword(userId, username) {
-        const newPassword = prompt(`Nhập mật khẩu mới cho tài khoản "${username}":`);
+        const newPassword = prompt(`Nhập mật khẩu mới cho "${username}":`);
         if (!newPassword) return;
-
         const res = await fetch('/api/admin/reset-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, newPassword })
         });
-
         const data = await res.json();
         alert(data.message);
         if (res.ok) loadUsers();
