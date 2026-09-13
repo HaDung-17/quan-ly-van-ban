@@ -159,7 +159,7 @@
 
         .upload-grid {
             display: grid;
-            grid-template-columns: 2fr 1.5fr 1.5fr;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr;
             gap: 12px;
             margin-bottom: 12px;
         }
@@ -170,7 +170,7 @@
             gap: 12px;
         }
 
-        input[type="text"], select {
+        input[type="text"], input[type="date"], select {
             padding: 9px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -350,6 +350,7 @@
                 <div class="upload-grid">
                     <input type="text" id="doc-title" placeholder="Trích yếu nội dung văn bản">
                     <input type="text" id="doc-number" placeholder="Số / Ký hiệu (Ví dụ: 123/QĐ-SĐ)">
+                    <input type="date" id="doc-date" title="Ngày phát hành của cơ quan ban hành">
                     <select id="doc-category" onchange="updateFormSubCategories()">
                         <option value="Văn bản Bộ Quốc Phòng">Văn bản Bộ Quốc Phòng</option>
                         <option value="Văn bản Quân Khu">Văn bản Quân Khu</option>
@@ -650,7 +651,14 @@
         }
 
         filtered.forEach(d => {
-            const dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString('vi-VN') : 'N/A';
+            let dateStr = 'N/A';
+            if (d.issueDate) {
+                const parts = d.issueDate.split('-');
+                if (parts.length === 3) dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } else if (d.createdAt) {
+                dateStr = new Date(d.createdAt).toLocaleDateString('vi-VN');
+            }
+
             let deptLabel = d.subCategory;
             if (d.childCategory) deptLabel += ` - ${d.childCategory}`;
 
@@ -675,6 +683,7 @@
     async function addDocument() {
         const docNumber = document.getElementById('doc-number').value;
         const title = document.getElementById('doc-title').value;
+        const issueDate = document.getElementById('doc-date').value;
         const category = document.getElementById('doc-category').value;
         const subCategory = document.getElementById('doc-sub-category').value;
         
@@ -686,7 +695,7 @@
         const res = await fetch('/api/documents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docNumber, title, category, subCategory, childCategory, link })
+            body: JSON.stringify({ docNumber, title, category, subCategory, childCategory, link, issueDate })
         });
 
         const data = await res.json();
@@ -694,6 +703,7 @@
         if (res.ok) {
             document.getElementById('doc-number').value = '';
             document.getElementById('doc-title').value = '';
+            document.getElementById('doc-date').value = '';
             document.getElementById('doc-link').value = '';
             loadDocuments();
         }
