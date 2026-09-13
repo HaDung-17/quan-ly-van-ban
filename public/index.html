@@ -274,12 +274,13 @@
         }
 
         .btn-action-sm {
-            padding: 4px 10px;
+            padding: 4px 8px;
             font-size: 11px;
             border: none;
             border-radius: 3px;
             cursor: pointer;
             color: white;
+            margin-right: 2px;
         }
 
         .empty-msg {
@@ -289,11 +290,10 @@
             font-style: italic;
         }
     </style>
-    <!-- Icon hiển thị trên Tab trình duyệt (Favicon) -->
-    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3IMe-wd1wTiCAtxp4uZrpC">
 
-    <!-- Icon hiển thị khi đưa dấu trang ra Màn hình chính (iOS / Android Home Screen) -->
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3IMe-wd1wTiCAtxp4uZrpC">
+    <!-- ICON WEB DÀNH CHO BÀN PHÍM/HOME SCREEN -->
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
 </head>
 <body>
 
@@ -364,17 +364,17 @@
                 </div>
             </div>
 
-            <!-- TABS MỤC LỚN (3 MỤC BỎ THÔNG BÁO) -->
+            <!-- TABS MỤC LỚN -->
             <div class="tabs-header">
                 <div class="tab-item active" onclick="selectMainTab('Văn bản Bộ Quốc Phòng', this)">🏛 Văn bản Bộ Quốc Phòng</div>
                 <div class="tab-item" onclick="selectMainTab('Văn bản Quân Khu', this)">🛡 Văn bản Quân Khu</div>
                 <div class="tab-item" onclick="selectMainTab('Văn bản Sư đoàn', this)">⚔ Văn bản Sư đoàn</div>
             </div>
 
-            <!-- TABS MỤC CON (CẤP 2) -->
+            <!-- TABS MỤC CON -->
             <div class="sub-tabs" id="sub-tabs-container"></div>
 
-            <!-- TABS MỤC CHÁU (CẤP 3 - DÀNH CHO CÁC PHÒNG BAN SƯ ĐOÀN) -->
+            <!-- TABS MỤC CHÁU -->
             <div class="child-tabs" id="child-tabs-container"></div>
 
             <!-- BẢNG HIỂN THỊ -->
@@ -422,7 +422,6 @@
 </div>
 
 <script>
-    // Danh sách 6 tab nhỏ cấp 3
     const childCategoriesList = [
         "Nghị quyết",
         "Quyết định",
@@ -432,7 +431,6 @@
         "Văn bản khác"
     ];
 
-    // Cấu trúc phân cấp Tab
     const categoryStructure = {
         "Văn bản Bộ Quốc Phòng": {
             "Văn bản Bộ Tổng Tham mưu": [],
@@ -720,6 +718,8 @@
                 : `<button class="btn-action-sm" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng Admin</button>`;
 
             const resetPwdBtn = `<button class="btn-action-sm" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
+            
+            const deleteBtn = `<button class="btn-action-sm" style="background:#dc3545;" ${isSelf ? 'disabled' : ''} onclick="deleteUser('${u.id}', '${u.username}')">Xóa</button>`;
 
             let locDisplay = u.location || 'Chưa xác định';
             if (locDisplay.includes('http')) {
@@ -735,7 +735,7 @@
                     <td><b style="color: ${u.role === 'admin' ? 'red' : 'green'};">${u.role}</b></td>
                     <td>${u.lastIp || u.ip || 'N/A'}<br><small style="color:#666;">Lần cuối: ${lastLogin}</small></td>
                     <td>${locDisplay}</td>
-                    <td>${roleBtn} ${resetPwdBtn}</td>
+                    <td>${roleBtn} ${resetPwdBtn} ${deleteBtn}</td>
                 </tr>
             `;
         });
@@ -760,6 +760,18 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, newPassword })
+        });
+        const data = await res.json();
+        alert(data.message);
+        if (res.ok) loadUsers();
+    }
+
+    async function deleteUser(userId, username) {
+        if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản "${username}" không?`)) return;
+        const res = await fetch('/api/admin/delete-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
         });
         const data = await res.json();
         alert(data.message);
