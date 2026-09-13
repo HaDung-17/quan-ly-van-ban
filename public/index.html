@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Văn Bản Nội Bộ Sư Đoàn 307, Quân Khu 5</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-red-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-star text-yellow-400 text-3xl"></i>
+        <div>
+          <h1 class="text-lg md:text-xl font-bold uppercase tracking-wide">HỆ THỐNG VĂN BẢN NỘI BỘ SƯ ĐOÀN 307, QUÂN KHU 5</h1>
+        </div>
+      </div>
+      <div id="userInfo" class="hidden flex items-center space-x-3">
+        <span class="text-sm font-medium">
+          <i class="fa-solid fa-user-shield text-yellow-300 mr-1"></i> 
+          <span id="displayName" class="font-bold"></span> 
+          (<span id="displayRole" class="text-yellow-300"></span>)
+        </span>
+        <button onclick="openProfileModal()" class="bg-red-700 hover:bg-red-600 text-xs px-2.5 py-1.5 rounded transition"><i class="fa-solid fa-key mr-1"></i>Đổi pass</button>
+        <button id="adminUsersBtn" onclick="openUsersModal()" class="hidden bg-yellow-600 hover:bg-yellow-500 text-white text-xs px-2.5 py-1.5 rounded transition"><i class="fa-solid fa-users-gear mr-1"></i>Thành viên</button>
+        <button onclick="logout()" class="bg-red-900 hover:bg-red-950 text-xs px-2.5 py-1.5 rounded transition"><i class="fa-solid fa-right-from-bracket mr-1"></i>Thoát</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTH SECTION -->
+  <div id="authSection" class="max-w-md mx-auto my-12 p-6 bg-white rounded-lg shadow-md border w-full">
+    <div class="flex border-b mb-6">
+      <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2 font-bold text-red-800 border-b-2 border-red-800">Đăng Nhập</button>
+      <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="w-1/2 py-2 font-bold text-gray-500">Tạo Tài Khoản Mới</button>
+    </div>
+
+    <!-- Form Đăng Nhập -->
+    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Tên đăng nhập</label>
+        <input type="text" id="loginUsername" required class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-800">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Mật khẩu</label>
+        <input type="password" id="loginPassword" required class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-800">
+      </div>
+      <button type="submit" class="w-full bg-red-800 hover:bg-red-900 text-white font-bold py-2 rounded transition">Đăng Nhập</button>
+    </form>
+
+    <!-- Form Đăng Ký -->
+    <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+      <div>
+        <label class="block text-sm font-medium mb-1">Họ và Tên / Cấp bậc đơn vị</label>
+        <input type="text" id="regFullname" required placeholder="Ví dụ: Nguyễn Văn A - PTM" class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-800">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Tên đăng nhập mong muốn</label>
+        <input type="text" id="regUsername" required class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-800">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Mật khẩu</label>
+        <input type="password" id="regPassword" required class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-800">
+      </div>
+      <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 rounded transition">Tạo Tài Khoản</button>
+    </form>
+  </div>
+
+  <!-- MAIN APP SECTION -->
+  <main id="appSection" class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full hidden">
+    
+    <!-- ADMIN TOOLBAR -->
+    <div id="adminPanel" class="hidden mb-6 bg-yellow-50 border border-yellow-300 p-4 rounded-lg shadow-sm">
+      <h3 class="text-base font-bold text-yellow-900 mb-3"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>ĐĂNG TẢI VĂN BẢN MỚI (QUẢN TRỊ VIÊN)</h3>
+      <form onsubmit="handleUploadDoc(event)" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input type="text" id="docTitle" placeholder="Trích yếu nội dung văn bản" required class="border p-2 rounded text-sm">
+        <input type="text" id="docNumber" placeholder="Số / Ký hiệu (Ví dụ: 123/QĐ-SĐ)" class="border p-2 rounded text-sm">
+        
+        <select id="docCategory" onchange="updateSubTabOptions()" class="border p-2 rounded text-sm font-semibold">
+          <option value="bqp">Văn bản Bộ Quốc Phòng</option>
+          <option value="qk">Văn Bản Quân Khu</option>
+          <option value="sdoan">Văn bản Sư đoàn</option>
+          <option value="thongbao">Thông báo</option>
+        </select>
+
+        <select id="docSubTab" class="border p-2 rounded text-sm font-semibold"></select>
+
+        <input type="file" id="docFile" required class="border p-1 rounded bg-white text-sm">
+
+        <button type="submit" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition text-sm">Tải Lên Văn Bản</button>
+      </form>
+    </div>
+
+    <!-- MAIN CATEGORY TABS -->
+    <div class="border-b border-gray-300 mb-4 flex space-x-2 overflow-x-auto">
+      <button onclick="setMainCategory('bqp')" id="mainTab-bqp" class="py-3 px-4 font-bold border-b-2 border-red-800 text-red-800 flex items-center whitespace-nowrap">
+        <i class="fa-solid fa-building-columns mr-2"></i>Văn bản Bộ Quốc Phòng
+      </button>
+      <button onclick="setMainCategory('qk')" id="mainTab-qk" class="py-3 px-4 font-bold text-gray-600 hover:text-red-800 border-b-2 border-transparent flex items-center whitespace-nowrap">
+        <i class="fa-solid fa-shield-halved mr-2"></i>Văn Bản Quân Khu
+      </button>
+      <button onclick="setMainCategory('sdoan')" id="mainTab-sdoan" class="py-3 px-4 font-bold text-gray-600 hover:text-red-800 border-b-2 border-transparent flex items-center whitespace-nowrap">
+        <i class="fa-solid fa-campground mr-2"></i>Văn bản Sư đoàn
+      </button>
+      <button onclick="setMainCategory('thongbao')" id="mainTab-thongbao" class="py-3 px-4 font-bold text-gray-600 hover:text-red-800 border-b-2 border-transparent flex items-center whitespace-nowrap">
+        <i class="fa-solid fa-bullhorn mr-2"></i>Thông báo
+      </button>
+    </div>
+
+    <!-- SUB TABS -->
+    <div id="subTabsContainer" class="flex flex-wrap gap-2 mb-6"></div>
+
+    <!-- DOCUMENT TABLE -->
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-red-950 text-white text-sm">
+            <th class="p-3">Số / Ký hiệu</th>
+            <th class="p-3">Trích yếu nội dung</th>
+            <th class="p-3">Thuộc đơn vị/cơ quan</th>
+            <th class="p-3">Ngày phát hành</th>
+            <th class="p-3 text-center">Tệp văn bản</th>
+            <th id="actionHeader" class="p-3 text-center hidden">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="documentTableBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- MODAL ĐỔI PROFILE -->
+  <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+      <h3 class="text-lg font-bold text-red-800 mb-4 pb-2 border-b">Thay Đổi Thông Tin Cá Nhân</h3>
+      <form onsubmit="handleUpdateProfile(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Họ tên hiển thị</label>
+          <input type="text" id="profFullname" class="w-full border p-2 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Tên đăng nhập mới (Để trống nếu giữ nguyên)</label>
+          <input type="text" id="profUsername" class="w-full border p-2 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Mật khẩu mới (Để trống nếu không đổi)</label>
+          <input type="password" id="profNewPassword" class="w-full border p-2 rounded text-sm">
+        </div>
+        <hr class="my-2">
+        <div>
+          <label class="block text-xs font-semibold text-red-700 mb-1">Mật khẩu hiện tại (Bắt buộc nhập để xác nhận)</label>
+          <input type="password" id="profCurrentPassword" required class="w-full border p-2 rounded text-sm border-red-300">
+        </div>
+        <div class="flex justify-end space-x-2 pt-3">
+          <button type="button" onclick="closeProfileModal()" class="px-3 py-1.5 bg-gray-300 rounded text-sm font-semibold">Hủy</button>
+          <button type="submit" class="px-3 py-1.5 bg-red-800 text-white rounded text-sm font-semibold">Lưu Thay Đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL QUẢN LÝ THÀNH VIÊN + HIỂN THỊ IP VÀ VỊ TRÍ (CHỈ ADMIN) -->
+  <div id="usersModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-5xl w-full shadow-xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4 pb-2 border-b">
+        <h3 class="text-lg font-bold text-yellow-900"><i class="fa-solid fa-users-gear mr-2"></i>Danh Sách Thành Viên, IP & Vị Trí Đăng Nhập</h3>
+        <button onclick="closeUsersModal()" class="text-gray-500 hover:text-black font-bold text-xl">&times;</button>
+      </div>
+      <div class="overflow-y-auto flex-grow">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-gray-200 border-b">
+              <th class="p-2">Họ Tên</th>
+              <th class="p-2">Tên Đăng Nhập</th>
+              <th class="p-2">Địa Chỉ IP</th>
+              <th class="p-2">Vị Trí Đăng Nhập</th>
+              <th class="p-2">Đăng Nhập Gần Nhất</th>
+              <th class="p-2 text-center">Trạng Thái</th>
+              <th class="p-2 text-center">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const subTabConfig = {
+      bqp: [
+        { id: 'bttm', name: 'Văn bản Bộ Tổng Tham mưu' },
+        { id: 'tcct', name: 'Văn bản Tổng Cục Chính trị' },
+        { id: 'tchckt', name: 'Văn bản Tổng Cục HC-KT' }
+      ],
+      qk: [
+        { id: 'btlqk', name: 'Văn bản BTL QK' },
+        { id: 'btmqk', name: 'Văn bản Bộ Tham mưu' },
+        { id: 'cctqk', name: 'Văn bản Cục Chính trị' },
+        { id: 'chcktqk', name: 'Văn Bản Cục HC-KT' }
+      ],
+      sdoan: [
+        { id: 'vbsd', name: 'Văn bản SĐ' },
+        { id: 'ptm', name: 'Văn bản PTM' },
+        { id: 'pct', name: 'Văn bản PCT' },
+        { id: 'phckt', name: 'Văn bản Phòng HC-KT' },
+        { id: 'vbkhac', name: 'Văn bản khác' }
+      ],
+      thongbao: [
+        { id: 'tbhangngay', name: 'Thông báo hàng ngày' }
+      ]
+    };
+
+    let currentMainCategory = 'bqp';
+    let currentSubTab = 'bttm';
+    let allDocuments = [];
+    let currentUser = null;
+
+    window.onload = () => {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (token && user) {
+        currentUser = user;
+        showApp();
+      }
+    };
+
+    function switchAuthTab(type) {
+      if (type === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('tabLoginBtn').className = 'w-1/2 py-2 font-bold text-red-800 border-b-2 border-red-800';
+        document.getElementById('tabRegisterBtn').className = 'w-1/2 py-2 font-bold text-gray-500';
+      } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('tabRegisterBtn').className = 'w-1/2 py-2 font-bold text-red-800 border-b-2 border-red-800';
+        document.getElementById('tabLoginBtn').className = 'w-1/2 py-2 font-bold text-gray-500';
+      }
+    }
+
+    function getBrowserLocation() {
+      return new Promise((resolve) => {
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            () => resolve(null),
+            { timeout: 5000 }
+          );
+        } else {
+          resolve(null);
+        }
+      });
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const clientGeo = await getBrowserLocation();
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
+          password: document.getElementById('loginPassword').value,
+          clientGeo
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        currentUser = data.user;
+        showApp();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullname: document.getElementById('regFullname').value,
+          username: document.getElementById('regUsername').value,
+          password: document.getElementById('regPassword').value
+        })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (res.ok) switchAuthTab('login');
+    }
+
+    function logout() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('appSection').classList.remove('hidden');
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('displayName').innerText = currentUser.fullname;
+      document.getElementById('displayRole').innerText = currentUser.role === 'admin' ? 'Quản trị viên' : 'Người xem';
+
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminPanel').classList.remove('hidden');
+        document.getElementById('actionHeader').classList.remove('hidden');
+        document.getElementById('adminUsersBtn').classList.remove('hidden');
+      }
+
+      updateSubTabOptions();
+      setMainCategory('bqp');
+      fetchDocuments();
+    }
+
+    function setMainCategory(cat) {
+      currentMainCategory = cat;
+      ['bqp', 'qk', 'sdoan', 'thongbao'].forEach(c => {
+        const btn = document.getElementById(`mainTab-${c}`);
+        if (c === cat) {
+          btn.className = 'py-3 px-4 font-bold border-b-2 border-red-800 text-red-800 flex items-center whitespace-nowrap';
+        } else {
+          btn.className = 'py-3 px-4 font-bold text-gray-600 hover:text-red-800 border-b-2 border-transparent flex items-center whitespace-nowrap';
+        }
+      });
+      renderSubTabs();
+      renderTable();
+    }
+
+    function renderSubTabs() {
+      const container = document.getElementById('subTabsContainer');
+      container.innerHTML = '';
+      const tabs = subTabConfig[currentMainCategory] || [];
+      if (tabs.length > 0) currentSubTab = tabs[0].id;
+
+      tabs.forEach(tab => {
+        const btn = document.createElement('button');
+        btn.innerText = tab.name;
+        btn.onclick = () => {
+          currentSubTab = tab.id;
+          updateSubTabStyle();
+          renderTable();
+        };
+        btn.id = `subTab-${tab.id}`;
+        container.appendChild(btn);
+      });
+      updateSubTabStyle();
+    }
+
+    function updateSubTabStyle() {
+      const tabs = subTabConfig[currentMainCategory] || [];
+      tabs.forEach(tab => {
+        const btn = document.getElementById(`subTab-${tab.id}`);
+        if (btn) {
+          if (tab.id === currentSubTab) {
+            btn.className = 'bg-red-800 text-white px-4 py-1.5 rounded-full text-xs font-semibold shadow';
+          } else {
+            btn.className = 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-1.5 rounded-full text-xs font-semibold';
+          }
+        }
+      });
+    }
+
+    function updateSubTabOptions() {
+      const cat = document.getElementById('docCategory').value;
+      const subSelect = document.getElementById('docSubTab');
+      subSelect.innerHTML = '';
+      (subTabConfig[cat] || []).forEach(tab => {
+        const opt = document.createElement('option');
+        opt.value = tab.id;
+        opt.innerText = tab.name;
+        subSelect.appendChild(opt);
+      });
+    }
+
+    async function fetchDocuments() {
+      const res = await fetch('/api/documents?' + new Date().getTime(), {
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+      if (res.ok) {
+        allDocuments = await res.json();
+        renderTable();
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('documentTableBody');
+      tbody.innerHTML = '';
+
+      const filtered = allDocuments.filter(d => d.category === currentMainCategory && d.subTab === currentSubTab);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-gray-500">Chưa có văn bản nào trong mục này.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(doc => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-gray-50 text-sm';
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-gray-800">${doc.docNumber || '---'}</td>
+          <td class="p-3 font-medium">${doc.title}</td>
+          <td class="p-3 text-xs"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded">${getSubTabName(doc.category, doc.subTab)}</span></td>
+          <td class="p-3 text-gray-500">${new Date(doc.createdAt).toLocaleDateString('vi-VN')}</td>
+          <td class="p-3 text-center">
+            ${doc.filePath ? `<a href="${doc.filePath}" download target="_blank" class="bg-blue-700 hover:bg-blue-800 text-white text-xs px-3 py-1.5 rounded inline-flex items-center"><i class="fa-solid fa-download mr-1"></i> Tải về</a>` : '<span class="text-gray-400">Không có tệp</span>'}
+          </td>
+          ${currentUser.role === 'admin' ? `
+            <td class="p-3 text-center">
+              <button onclick="deleteDoc(${doc.id})" class="text-red-600 hover:text-red-800 p-1"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          ` : ''}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getSubTabName(cat, subId) {
+      const found = (subTabConfig[cat] || []).find(s => s.id === subId);
+      return found ? found.name : '';
+    }
+
+    async function handleUploadDoc(e) {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('title', document.getElementById('docTitle').value);
+      formData.append('docNumber', document.getElementById('docNumber').value);
+      formData.append('category', document.getElementById('docCategory').value);
+      formData.append('subTab', document.getElementById('docSubTab').value);
+      
+      const fileInput = document.getElementById('docFile');
+      if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        alert('Tải lên văn bản thành công!');
+        document.getElementById('docTitle').value = '';
+        document.getElementById('docNumber').value = '';
+        fileInput.value = '';
+        fetchDocuments();
+      } else {
+        alert('Lỗi tải lên văn bản!');
+      }
+    }
+
+    async function deleteDoc(id) {
+      if (!confirm('Bạn có chắc chắn muốn xóa văn bản này không?')) return;
+      const res = await fetch(`/api/documents/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        fetchDocuments();
+      } else {
+        alert('Xóa thất bại!');
+      }
+    }
+
+    function openProfileModal() {
+      document.getElementById('profFullname').value = currentUser.fullname;
+      document.getElementById('profUsername').value = currentUser.username;
+      document.getElementById('profileModal').classList.remove('hidden');
+    }
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    async function handleUpdateProfile(e) {
+      e.preventDefault();
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          fullname: document.getElementById('profFullname').value,
+          newUsername: document.getElementById('profUsername').value,
+          newPassword: document.getElementById('profNewPassword').value,
+          currentPassword: document.getElementById('profCurrentPassword').value
+        })
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      if (res.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        currentUser = data.user;
+        showApp();
+        closeProfileModal();
+      }
+    }
+
+    // HIỂN THỊ DANH SÁCH USER VÀ VỊ TRÍ/IP (CHỐNG DÍNH CACHE HOÀN TOÀN)
+    async function openUsersModal() {
+      document.getElementById('usersModal').classList.remove('hidden');
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Đang tải danh sách mới nhất...</td></tr>';
+
+      try {
+        const res = await fetch('/api/admin/users?' + new Date().getTime(), {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+
+        if (res.ok) {
+          const users = await res.json();
+          tbody.innerHTML = '';
+
+          if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Chưa có người dùng nào.</td></tr>';
+            return;
+          }
+
+          users.forEach(u => {
+            const loc = u.locationInfo;
+            let locationStr = 'Chưa có thông tin';
+            let mapBtn = '';
+
+            if (loc) {
+              locationStr = `${loc.city || ''}, ${loc.country || ''}`;
+              if (loc.mapsUrl) {
+                mapBtn = `<a href="${loc.mapsUrl}" target="_blank" class="ml-1 text-blue-600 hover:underline text-xs"><i class="fa-solid fa-map-location-dot"></i> Bản đồ</a>`;
+              }
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'border-b hover:bg-gray-50';
+            tr.innerHTML = `
+              <td class="p-2 font-semibold text-gray-800">${u.fullname}</td>
+              <td class="p-2">${u.username}</td>
+              <td class="p-2 font-mono text-xs text-blue-800">${u.lastIp}</td>
+              <td class="p-2 text-xs">${locationStr} ${mapBtn}</td>
+              <td class="p-2 text-xs text-gray-500">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}</td>
+              <td class="p-2 text-center">
+                ${u.isBlocked ? '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold">Đã khóa</span>' : '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">Hoạt động</span>'}
+              </td>
+              <td class="p-2 text-center">
+                ${u.role !== 'admin' ? `
+                  <button onclick="toggleBlockUser(${u.id}, ${!u.isBlocked})" class="${u.isBlocked ? 'bg-green-700 hover:bg-green-800' : 'bg-red-700 hover:bg-red-800'} text-white text-xs px-2 py-1 rounded">
+                    ${u.isBlocked ? 'Mở khóa' : 'Khóa'}
+                  </button>
+                ` : '<span class="text-xs text-gray-400">Admin</span>'}
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          const err = await res.json();
+          tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-600">Lỗi: ${err.message}</td></tr>`;
+        }
+      } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-red-600">Lỗi kết nối máy chủ!</td></tr>';
+      }
+    }
+
+    function closeUsersModal() {
+      document.getElementById('usersModal').classList.add('hidden');
+    }
+
+    async function toggleBlockUser(userId, isBlocked) {
+      const res = await fetch(`/api/admin/users/${userId}/block`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ isBlocked })
+      });
+      if (res.ok) {
+        openUsersModal();
+      } else {
+        const data = await res.json();
+        alert(data.message);
+      }
+    }
+  </script>
+</body>
+</html>

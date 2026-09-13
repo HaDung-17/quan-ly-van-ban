@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "username": "admin",
+    "password": "$2a$10$GUSHyPu.2p3do9pI7CgVIuJ3scmGOGy7caCsPG5d4PNZGidm0jK3W",
+    "role": "admin",
+    "fullname": "Quản trị viên",
+    "lastLogin": "2026-09-13T06:39:43.734Z",
+    "lastIp": "::1",
+    "locationInfo": {
+      "ip": "::1",
+      "city": "Localhost / Mạng nội bộ",
+      "country": "Nội bộ",
+      "lat": null,
+      "lon": null,
+      "mapsUrl": null
+    }
+  },
+  {
+    "id": 1789280077830,
+    "username": "Dung_17",
+    "password": "$2a$10$AjBDqnZK.pqQSymjBQWzDOGiIfBR2R2uz6vtP3HWehlQ0Vxaj3dQS",
+    "role": "user",
+    "fullname": "Hà Duy Dũng/PTM",
+    "isBlocked": false,
+    "lastLogin": "2026-09-13T06:15:04.839Z",
+    "lastIp": "::1",
+    "locationInfo": {
+      "ip": "::1",
+      "city": "Localhost / Mạng nội bộ",
+      "country": "Nội bộ",
+      "lat": null,
+      "lon": null,
+      "mapsUrl": null
+    }
+  }
+]
