@@ -70,7 +70,6 @@
             border: none;
         }
 
-        /* MAIN CONTAINER */
         .container {
             max-width: 1200px;
             margin: 20px auto;
@@ -79,7 +78,7 @@
 
         .hidden { display: none !important; }
 
-        /* FORM DANG NHAP / DANG KY */
+        /* AUTH FORM */
         .auth-card {
             max-width: 400px;
             margin: 60px auto;
@@ -138,7 +137,7 @@
             background: var(--military-dark-red);
         }
 
-        /* PANEL PHÂN LOẠI VĂN BẢN */
+        /* CARD */
         .card {
             background: white;
             border-radius: 6px;
@@ -180,21 +179,24 @@
             font-size: 13px;
         }
 
-        /* TABS NAV */
+        /* TABS HỆ THỐNG */
         .tabs-header {
             display: flex;
             border-bottom: 2px solid #ddd;
             margin-top: 25px;
-            gap: 20px;
+            gap: 10px;
         }
 
         .tab-item {
-            padding: 10px 15px;
+            padding: 10px 18px;
             font-weight: bold;
             cursor: pointer;
             color: #555;
             border-bottom: 3px solid transparent;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .tab-item.active {
@@ -206,6 +208,7 @@
             display: flex;
             gap: 10px;
             margin: 15px 0;
+            flex-wrap: wrap;
         }
 
         .sub-tab-item {
@@ -216,6 +219,11 @@
             font-weight: bold;
             cursor: pointer;
             color: #495057;
+            transition: 0.2s;
+        }
+
+        .sub-tab-item:hover {
+            background: #dee2e6;
         }
 
         .sub-tab-item.active {
@@ -294,7 +302,7 @@
     </div>
 </div>
 
-<!-- MÀN HÌNH CHÍNH SAU KHU DĂNG NHẬP -->
+<!-- MÀN HÌNH CHÍNH SAU KHU ĐĂNG NHẬP -->
 <div id="main-box" class="hidden">
     <!-- HEADER -->
     <div class="header">
@@ -320,7 +328,7 @@
                 <div class="upload-grid">
                     <input type="text" id="doc-title" placeholder="Trích yếu nội dung văn bản">
                     <input type="text" id="doc-number" placeholder="Số / Ký hiệu (Ví dụ: 123/QĐ-SĐ)">
-                    <select id="doc-category">
+                    <select id="doc-category" onchange="updateFormSubCategories()">
                         <option value="Văn bản Bộ Quốc Phòng">Văn bản Bộ Quốc Phòng</option>
                         <option value="Văn bản Quân Khu">Văn bản Quân Khu</option>
                         <option value="Văn bản Sư đoàn">Văn bản Sư đoàn</option>
@@ -328,29 +336,22 @@
                     </select>
                 </div>
                 <div class="upload-grid-2">
-                    <select id="doc-sub-category">
-                        <option value="Bộ Tổng Tham mưu">Văn bản Bộ Tổng Tham mưu</option>
-                        <option value="Tổng Cục Chính trị">Văn bản Tổng Cục Chính trị</option>
-                        <option value="Tổng Cục HC-KT">Văn bản Tổng Cục HC-KT</option>
-                    </select>
+                    <select id="doc-sub-category"></select>
                     <input type="text" id="doc-link" placeholder="Đường link tệp (Google Drive / Đổ dữ liệu file)">
                     <button class="btn-primary" onclick="addDocument()">Tải Lên Văn Bản</button>
                 </div>
             </div>
 
-            <!-- MENU DANH MỤC VĂN BẢN -->
+            <!-- TABS MỤC LỚN -->
             <div class="tabs-header">
-                <div class="tab-item active">🏛 Văn bản Bộ Quốc Phòng</div>
-                <div class="tab-item">🛡 Văn bản Quân Khu</div>
-                <div class="tab-item">⚔ Văn bản Sư đoàn</div>
-                <div class="tab-item">📢 Thông báo</div>
+                <div class="tab-item active" onclick="selectMainTab('Văn bản Bộ Quốc Phòng', this)">🏛 Văn bản Bộ Quốc Phòng</div>
+                <div class="tab-item" onclick="selectMainTab('Văn bản Quân Khu', this)">🛡 Văn bản Quân Khu</div>
+                <div class="tab-item" onclick="selectMainTab('Văn bản Sư đoàn', this)">⚔ Văn bản Sư đoàn</div>
+                <div class="tab-item" onclick="selectMainTab('Thông báo', this)">📢 Thông báo</div>
             </div>
 
-            <div class="sub-tabs">
-                <div class="sub-tab-item active">Văn bản Bộ Tổng Tham mưu</div>
-                <div class="sub-tab-item">Văn bản Tổng Cục Chính trị</div>
-                <div class="sub-tab-item">Văn bản Tổng Cục HC-KT</div>
-            </div>
+            <!-- TABS MỤC CON -->
+            <div class="sub-tabs" id="sub-tabs-container"></div>
 
             <!-- BẢNG HIỂN THỊ -->
             <div class="card" style="padding: 0; overflow: hidden;">
@@ -373,7 +374,7 @@
             </div>
         </div>
 
-        <!-- KHU VỰC QUẢN TRỊ VIÊN (ĐỊNH VỊ IP/GPS & USER) -->
+        <!-- KHU VỰC QUẢN TRỊ VIÊN -->
         <div id="view-admin" class="card hidden">
             <div class="card-title" style="justify-content: space-between;">
                 <span>👥 QUẢN LÝ THÀNH VIÊN & NHẬT KÝ ĐỊNH VỊ IP/GPS</span>
@@ -397,10 +398,37 @@
 </div>
 
 <script>
+    // Cấu trúc Tab theo yêu cầu
+    const categoryStructure = {
+        "Văn bản Bộ Quốc Phòng": [
+            "Văn bản Bộ Tổng Tham mưu",
+            "Văn bản Tổng Cục Chính trị",
+            "Văn bản Tổng Cục HC-KT"
+        ],
+        "Văn bản Quân Khu": [
+            "Văn bản BTL QK",
+            "Văn bản Bộ Tham mưu",
+            "Văn bản Cục Chính trị",
+            "Văn bản Cục HC-KT"
+        ],
+        "Văn bản Sư đoàn": [
+            "Văn bản SĐ",
+            "Văn bản PTM",
+            "Văn bản PCT",
+            "Văn bản Phòng HC-KT",
+            "Văn bản khác"
+        ],
+        "Thông báo": []
+    };
+
+    let currentMainTab = "Văn bản Bộ Quốc Phòng";
+    let currentSubTab = categoryStructure["Văn bản Bộ Quốc Phòng"][0];
+
     let isRegisterMode = false;
     let currentUser = null;
     let currentLat = null;
     let currentLon = null;
+    let allDocuments = [];
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -454,6 +482,8 @@
         document.getElementById('user-display').innerText = currentUser.fullname || currentUser.username;
         document.getElementById('role-display').innerText = currentUser.role;
 
+        renderSubTabs();
+        updateFormSubCategories();
         loadDocuments();
 
         if (currentUser.role === 'admin') {
@@ -463,34 +493,88 @@
         }
     }
 
-    function switchView(viewName) {
-        if (viewName === 'admin') {
-            document.getElementById('view-docs').classList.add('hidden');
-            document.getElementById('view-admin').classList.remove('hidden');
+    function selectMainTab(mainTab, element) {
+        currentMainTab = mainTab;
+        document.querySelectorAll('.tabs-header .tab-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        const subTabs = categoryStructure[mainTab];
+        currentSubTab = subTabs.length > 0 ? subTabs[0] : '';
+        
+        renderSubTabs();
+        filterAndDisplayDocs();
+    }
+
+    function selectSubTab(subTab, element) {
+        currentSubTab = subTab;
+        document.querySelectorAll('.sub-tabs .sub-tab-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        filterAndDisplayDocs();
+    }
+
+    function renderSubTabs() {
+        const container = document.getElementById('sub-tabs-container');
+        container.innerHTML = '';
+        const subTabs = categoryStructure[currentMainTab];
+
+        if (subTabs.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'flex';
+        subTabs.forEach((sub, index) => {
+            const activeClass = index === 0 ? 'active' : '';
+            container.innerHTML += `<div class="sub-tab-item ${activeClass}" onclick="selectSubTab('${sub}', this)">${sub}</div>`;
+        });
+    }
+
+    function updateFormSubCategories() {
+        const mainCat = document.getElementById('doc-category').value;
+        const subSelect = document.getElementById('doc-sub-category');
+        subSelect.innerHTML = '';
+
+        const subTabs = categoryStructure[mainCat];
+
+        if (subTabs.length === 0) {
+            subSelect.style.display = 'none';
         } else {
-            document.getElementById('view-admin').classList.add('hidden');
-            document.getElementById('view-docs').classList.remove('hidden');
+            subSelect.style.display = 'block';
+            subTabs.forEach(sub => {
+                subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
         }
     }
 
     async function loadDocuments() {
         const res = await fetch('/api/documents');
-        const docs = await res.json();
+        allDocuments = await res.json();
+        filterAndDisplayDocs();
+    }
+
+    function filterAndDisplayDocs() {
         const tbody = document.getElementById('doc-table-body');
         tbody.innerHTML = '';
 
-        if (docs.length === 0) {
+        const filtered = allDocuments.filter(d => {
+            if (currentMainTab === 'Thông báo') {
+                return d.category === 'Thông báo';
+            }
+            return d.category === currentMainTab && d.subCategory === currentSubTab;
+        });
+
+        if (filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Chưa có văn bản nào trong mục này.</td></tr>';
             return;
         }
 
-        docs.forEach(d => {
+        filtered.forEach(d => {
             const dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString('vi-VN') : 'N/A';
             tbody.innerHTML += `
                 <tr>
                     <td><b>${d.docNumber}</b></td>
                     <td>${d.title}</td>
-                    <td>${d.category}</td>
+                    <td>${d.subCategory || d.category}</td>
                     <td>${dateStr}</td>
                     <td><a href="${d.link}" target="_blank" style="color: var(--military-red); font-weight: bold; text-decoration: none;">Xem tệp</a></td>
                 </tr>
@@ -502,12 +586,13 @@
         const docNumber = document.getElementById('doc-number').value;
         const title = document.getElementById('doc-title').value;
         const category = document.getElementById('doc-category').value;
+        const subCategory = category === 'Thông báo' ? '' : document.getElementById('doc-sub-category').value;
         const link = document.getElementById('doc-link').value;
 
         const res = await fetch('/api/documents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docNumber, title, category, link })
+            body: JSON.stringify({ docNumber, title, category, subCategory, link })
         });
 
         const data = await res.json();
@@ -517,6 +602,16 @@
             document.getElementById('doc-title').value = '';
             document.getElementById('doc-link').value = '';
             loadDocuments();
+        }
+    }
+
+    function switchView(viewName) {
+        if (viewName === 'admin') {
+            document.getElementById('view-docs').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+        } else {
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('view-docs').classList.remove('hidden');
         }
     }
 
