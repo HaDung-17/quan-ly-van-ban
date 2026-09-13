@@ -32,7 +32,7 @@ const writeJsonFile = (filePath, data) => {
     }
 };
 
-// API Đăng ký (Tài khoản đầu tiên tự động thành Admin)
+// API Đăng ký
 app.post('/api/register', (req, res) => {
     const { username, password, fullname } = req.body;
     if (!username || !password) {
@@ -86,7 +86,7 @@ app.get('/api/admin/users', (req, res) => {
     res.json(readJsonFile(USERS_FILE));
 });
 
-// API Thay đổi quyền Admin / User trực tiếp trên App
+// API Thay đổi quyền Admin / User
 app.post('/api/admin/change-role', (req, res) => {
     const { userId, newRole } = req.body;
     const users = readJsonFile(USERS_FILE);
@@ -98,7 +98,26 @@ app.post('/api/admin/change-role', (req, res) => {
 
     user.role = newRole;
     writeJsonFile(USERS_FILE, users);
-    res.json({ message: `Đã cập nhật quyền thành ${newRole}`, users });
+    res.json({ message: `Đã cập nhật quyền thành ${newRole}` });
+});
+
+// API Admin Đặt lại mật khẩu cho thành viên
+app.post('/api/admin/reset-password', (req, res) => {
+    const { userId, newPassword } = req.body;
+    if (!newPassword || newPassword.trim() === '') {
+        return res.status(400).json({ message: 'Mật khẩu mới không được để trống.' });
+    }
+
+    const users = readJsonFile(USERS_FILE);
+    const user = users.find(u => u.id === userId);
+
+    if (!user) {
+        return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+    }
+
+    user.password = newPassword;
+    writeJsonFile(USERS_FILE, users);
+    res.json({ message: `Đã đặt lại mật khẩu thành công cho tài khoản: ${user.username}` });
 });
 
 const PORT = process.env.PORT || 10000;
