@@ -6,7 +6,7 @@
     <title>Quản Lý Văn Bản - Sư Đoàn 307</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
-        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .hidden { display: none; }
         input, button { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; }
         button { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
@@ -14,7 +14,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f2f2f2; }
-        .btn-role { width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-action { width: auto; padding: 5px 8px; font-size: 12px; margin-right: 3px; }
         .admin-badge { color: red; font-weight: bold; }
     </style>
 </head>
@@ -43,7 +43,7 @@
         <!-- Khu vực Quản lý Thành viên cho Admin -->
         <div id="admin-section" class="hidden">
             <hr>
-            <h4>Danh Sách Thành Viên & Phân Quyền Admin</h4>
+            <h4>Danh Sách Thành Viên & Quản Lý Quyền / Mật Khẩu</h4>
             <table>
                 <thead>
                     <tr>
@@ -68,7 +68,7 @@
         isRegisterMode = !isRegisterMode;
         document.getElementById('form-title').innerText = isRegisterMode ? 'Đăng Ký Tài Khoản' : 'Đăng Nhập';
         document.getElementById('fullname').classList.toggle('hidden', !isRegisterMode);
-        document.getElementById('btn-submit').innerText = isRegisterMode ? 'Đạo Tài Khoản' : 'Đăng Nhập';
+        document.getElementById('btn-submit').innerText = isRegisterMode ? 'Đăng Ký Tài Khoản' : 'Đăng Nhập';
         document.getElementById('toggle-link').innerText = isRegisterMode ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký ngay';
     }
 
@@ -119,9 +119,14 @@
 
         users.forEach(u => {
             const isSelf = u.id === currentUser.id;
-            const actionBtn = u.role === 'admin' 
-                ? `<button class="btn-role" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ xuống User</button>`
-                : `<button class="btn-role" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng làm Admin</button>`;
+            
+            // Nút phân quyền
+            const roleBtn = u.role === 'admin' 
+                ? `<button class="btn-action" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ xuống User</button>`
+                : `<button class="btn-action" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng làm Admin</button>`;
+
+            // Nút đổi mật khẩu
+            const resetPwdBtn = `<button class="btn-action" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
 
             tbody.innerHTML += `
                 <tr>
@@ -129,19 +134,34 @@
                     <td>${u.fullname || '-'}</td>
                     <td><span class="${u.role === 'admin' ? 'admin-badge' : ''}">${u.role}</span></td>
                     <td>${u.lastIp || u.ip || 'N/A'}</td>
-                    <td>${actionBtn}</td>
+                    <td>${roleBtn}${resetPwdBtn}</td>
                 </tr>
             `;
         });
     }
 
     async function changeRole(userId, newRole) {
-        if (!confirm(`Bạn có chắc muốn chuyển quyền tài khoản này thành ${newRole}?`)) return;
+        if (!confirm(`Xác nhận chuyển quyền tài khoản này thành ${newRole}?`)) return;
 
         const res = await fetch('/api/admin/change-role', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, newRole })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+        if (res.ok) loadUsers();
+    }
+
+    async function resetPassword(userId, username) {
+        const newPassword = prompt(`Nhập mật khẩu mới cho tài khoản "${username}":`);
+        if (!newPassword) return;
+
+        const res = await fetch('/api/admin/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, newPassword })
         });
 
         const data = await res.json();
