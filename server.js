@@ -48,8 +48,10 @@ app.post('/api/register', (req, res) => {
         fullname: fullname || username,
         role: users.length === 0 ? 'admin' : 'user',
         ip: clientIp,
-        location: 'Chưa cập nhật',
-        createdAt: new Date().toISOString()
+        lastIp: clientIp,
+        location: 'Chưa xác định',
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString()
     };
 
     users.push(newUser);
@@ -57,7 +59,7 @@ app.post('/api/register', (req, res) => {
     res.json({ message: 'Đăng ký thành công!', user: newUser });
 });
 
-// API Đăng nhập (Tích hợp tra cứu Vị trí IP/GPS)
+// API Đăng nhập (Ghi nhận thời gian và IP/vị trí từng đăng nhập)
 app.post('/api/login', async (req, res) => {
     const { username, password, lat, lon } = req.body;
     const users = readJsonFile(USERS_FILE);
@@ -68,6 +70,7 @@ app.post('/api/login', async (req, res) => {
 
         const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip;
         user.lastIp = clientIp;
+        user.lastLoginAt = new Date().toISOString();
 
         if (lat && lon) {
             user.location = `GPS: ${lat}, ${lon} (https://maps.google.com/?q=${lat},${lon})`;
@@ -92,7 +95,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// API Admin lấy danh sách User
+// API Admin lấy TOÀN BỘ danh sách thành viên (cả đang hoạt động lẫn đã từng đăng nhập)
 app.get('/api/admin/users', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(USERS_FILE));
@@ -126,14 +129,14 @@ app.post('/api/admin/reset-password', (req, res) => {
     }
 });
 
-// API Quản lý Văn bản (Lấy danh sách & Thêm mới)
+// API Văn bản
 app.get('/api/documents', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(DOCUMENTS_FILE));
 });
 
 app.post('/api/documents', (req, res) => {
-    const { title, docNumber, category, link } = req.body;
+    const { title, docNumber, category, subCategory, link } = req.body;
     if (!title || !docNumber) return res.status(400).json({ message: 'Thiếu thông tin văn bản.' });
 
     const docs = readJsonFile(DOCUMENTS_FILE);
@@ -142,6 +145,7 @@ app.post('/api/documents', (req, res) => {
         title,
         docNumber,
         category: category || 'Chung',
+        subCategory: subCategory || '',
         link: link || '#',
         createdAt: new Date().toISOString()
     };
