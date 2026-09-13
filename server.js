@@ -59,7 +59,7 @@ app.post('/api/register', (req, res) => {
     res.json({ message: 'Đăng ký thành công!', user: newUser });
 });
 
-// API Đăng nhập (Ghi nhận thời gian và IP/vị trí từng đăng nhập)
+// API Đăng nhập
 app.post('/api/login', async (req, res) => {
     const { username, password, lat, lon } = req.body;
     const users = readJsonFile(USERS_FILE);
@@ -95,7 +95,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// API Admin lấy TOÀN BỘ danh sách thành viên (cả đang hoạt động lẫn đã từng đăng nhập)
+// API Admin lấy danh sách thành viên
 app.get('/api/admin/users', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(USERS_FILE));
@@ -129,14 +129,14 @@ app.post('/api/admin/reset-password', (req, res) => {
     }
 });
 
-// API Văn bản
+// API Văn bản (Hỗ trợ phân cấp 3 tầng)
 app.get('/api/documents', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(DOCUMENTS_FILE));
 });
 
 app.post('/api/documents', (req, res) => {
-    const { title, docNumber, category, subCategory, link } = req.body;
+    const { title, docNumber, category, subCategory, childCategory, link } = req.body;
     if (!title || !docNumber) return res.status(400).json({ message: 'Thiếu thông tin văn bản.' });
 
     const docs = readJsonFile(DOCUMENTS_FILE);
@@ -144,8 +144,9 @@ app.post('/api/documents', (req, res) => {
         id: Date.now().toString(),
         title,
         docNumber,
-        category: category || 'Chung',
+        category: category || '',
         subCategory: subCategory || '',
+        childCategory: childCategory || '',
         link: link || '#',
         createdAt: new Date().toISOString()
     };
