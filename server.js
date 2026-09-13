@@ -129,7 +129,22 @@ app.post('/api/admin/reset-password', (req, res) => {
     }
 });
 
-// API Văn bản (Hỗ trợ phân cấp 3 tầng)
+// API Admin xóa user
+app.post('/api/admin/delete-user', (req, res) => {
+    const { userId } = req.body;
+    let users = readJsonFile(USERS_FILE);
+    const initialLength = users.length;
+    users = users.filter(u => u.id !== userId);
+
+    if (users.length < initialLength) {
+        writeJsonFile(USERS_FILE, users);
+        res.json({ message: 'Đã xóa tài khoản thành công.' });
+    } else {
+        res.status(404).json({ message: 'Không tìm thấy tài khoản để xóa.' });
+    }
+});
+
+// API Văn bản
 app.get('/api/documents', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(DOCUMENTS_FILE));
