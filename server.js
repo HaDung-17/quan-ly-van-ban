@@ -144,15 +144,14 @@ app.post('/api/admin/delete-user', (req, res) => {
     }
 });
 
-// API Lấy danh sách văn bản
+// API Văn bản
 app.get('/api/documents', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(readJsonFile(DOCUMENTS_FILE));
 });
 
-// API Thêm văn bản
 app.post('/api/documents', (req, res) => {
-    const { title, docNumber, category, subCategory, childCategory, link } = req.body;
+    const { title, docNumber, category, subCategory, childCategory, link, issueDate } = req.body;
     if (!title || !docNumber) return res.status(400).json({ message: 'Thiếu thông tin văn bản.' });
 
     const docs = readJsonFile(DOCUMENTS_FILE);
@@ -164,6 +163,7 @@ app.post('/api/documents', (req, res) => {
         subCategory: subCategory || '',
         childCategory: childCategory || '',
         link: link || '#',
+        issueDate: issueDate || '',
         createdAt: new Date().toISOString()
     };
 
