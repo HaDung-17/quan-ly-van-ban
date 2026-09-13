@@ -3,85 +3,391 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Văn Bản - Sư Đoàn 307</title>
+    <title>HỆ THỐNG VĂN BẢN NỘI BỘ SƯ ĐOÀN 307, QUÂN KHU 5</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
-        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
-        input, button, select { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background-color: #0056b3; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .btn-action { width: auto; padding: 5px 8px; font-size: 12px; margin-right: 3px; }
-        .admin-badge { color: red; font-weight: bold; }
-        .card { background: #fafafa; border: 1px solid #eee; padding: 15px; margin-top: 20px; border-radius: 6px; }
+        :root {
+            --military-red: #8b1515;
+            --military-dark-red: #670e0e;
+            --military-gold: #f5c518;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+
+        /* HEADER */
+        .header {
+            background-color: var(--military-red);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title span.star {
+            color: var(--military-gold);
+            font-size: 22px;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-nav button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .user-nav button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .user-nav button.btn-logout {
+            background: #222;
+            border: none;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* FORM DANG NHAP / DANG KY */
+        .auth-card {
+            max-width: 400px;
+            margin: 60px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 5px solid var(--military-red);
+        }
+
+        .auth-header {
+            background: var(--military-red);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .auth-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--military-red);
+            color: white;
+            border: none;
+            padding: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background: var(--military-dark-red);
+        }
+
+        /* PANEL PHÂN LOẠI VĂN BẢN */
+        .card {
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: var(--military-red);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .upload-grid-2 {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 1fr;
+            gap: 12px;
+        }
+
+        input[type="text"], select {
+            padding: 9px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+
+        /* TABS NAV */
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-top: 25px;
+            gap: 20px;
+        }
+
+        .tab-item {
+            padding: 10px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            font-size: 14px;
+        }
+
+        .tab-item.active {
+            color: var(--military-red);
+            border-bottom-color: var(--military-red);
+        }
+
+        .sub-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .sub-tab-item {
+            background: #e9ecef;
+            padding: 6px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #495057;
+        }
+
+        .sub-tab-item.active {
+            background: var(--military-red);
+            color: white;
+        }
+
+        /* BẢNG DỮ LIỆU */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--military-dark-red);
+            color: white;
+            padding: 11px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-action-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #777;
+            padding: 30px 0;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Hệ Thống Quản Lý Văn Bản - Sư Đoàn 307</h2>
+<!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ -->
+<div id="auth-box">
+    <div class="auth-card">
+        <div class="auth-header">
+            <span style="color: var(--military-gold);">★</span> SƯ ĐOÀN 307 - ĐĂNG NHẬP
+        </div>
+        <div class="auth-body">
+            <div class="form-group">
+                <label>Tên đăng nhập</label>
+                <input type="text" id="username" placeholder="Nhập tên đăng nhập">
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="password" placeholder="Nhập mật khẩu">
+            </div>
+            <div class="form-group hidden" id="fullname-group">
+                <label>Họ và tên quân nhân</label>
+                <input type="text" id="fullname" placeholder="Ví dụ: Nguyễn Văn A">
+            </div>
+            <button class="btn-primary" id="btn-submit" onclick="login()">ĐĂNG NHẬP HỆ THỐNG</button>
+            <p style="text-align: center; margin-top: 15px; font-size: 12px;">
+                <a href="#" id="toggle-link" onclick="toggleMode()" style="color: var(--military-red); text-decoration: none;">Chưa có tài khoản? Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+</div>
 
-    <!-- Form Đăng Nhập / Đăng Ký -->
-    <div id="auth-box">
-        <h3 id="form-title">Đăng Nhập</h3>
-        <input type="text" id="username" placeholder="Tên đăng nhập">
-        <input type="password" id="password" placeholder="Mật khẩu">
-        <input type="text" id="fullname" placeholder="Họ và tên (chỉ dùng khi đăng ký)" class="hidden">
-        <button id="btn-submit" onclick="login()">Đăng Nhập</button>
-        <p style="text-align: center;">
-            <a href="#" id="toggle-link" onclick="toggleMode()">Chưa có tài khoản? Đăng ký ngay</a>
-        </p>
+<!-- MÀN HÌNH CHÍNH SAU KHU DĂNG NHẬP -->
+<div id="main-box" class="hidden">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-title">
+            <span class="star">★</span>
+            HỆ THỐNG VĂN BẢN NỘI BỘ SƯ ĐOÀN 307, QUÂN KHU 5
+        </div>
+        <div class="user-nav">
+            <span style="font-size: 13px;">👤 <b id="user-display"></b> (<span id="role-display" style="color: var(--military-gold);"></span>)</span>
+            <button id="btn-admin-tab" class="hidden" onclick="switchView('admin')" style="background: var(--military-gold); color: #000; font-weight: bold;">Quản trị viên</button>
+            <button onclick="logout()" class="btn-logout">Thoát</button>
+        </div>
     </div>
 
-    <!-- Màn hình chính sau khi đăng nhập -->
-    <div id="main-box" class="hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Xin chào: <span id="user-display"></span> (<span id="role-display"></span>)</h3>
-            <button onclick="logout()" style="background-color: #dc3545; width: auto;">Đăng xuất</button>
-        </div>
-
-        <!-- MỤC 1: HỆ THỐNG QUẢN LÝ VĂN BẢN -->
-        <div class="card">
-            <h3>Danh Sách Văn Bản Sư Đoàn</h3>
-            
-            <!-- Form Thêm văn bản cho Admin -->
-            <div id="add-doc-section" class="hidden" style="margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 4px;">
-                <h4>Thêm Văn Bản Mới</h4>
-                <input type="text" id="doc-number" placeholder="Số / Ký hiệu văn bản">
-                <input type="text" id="doc-title" placeholder="Tên / Trích yếu văn bản">
-                <input type="text" id="doc-category" placeholder="Loại văn bản (Chỉ thị, Nghị quyết...)">
-                <input type="text" id="doc-link" placeholder="Đường link tệp (Google Drive / PDF)">
-                <button onclick="addDocument()" style="background-color: #28a745;">Lưu Văn Bản</button>
+    <div class="container">
+        <!-- KHU VỰC VĂN BẢN -->
+        <div id="view-docs">
+            <!-- PANEL ĐĂNG TẢI (CHỈ ADMIN THẤY) -->
+            <div id="add-doc-section" class="card hidden">
+                <div class="card-title">
+                    ⬆ ĐĂNG TẢI VĂN BẢN MỚI (QUẢN TRỊ VIÊN)
+                </div>
+                <div class="upload-grid">
+                    <input type="text" id="doc-title" placeholder="Trích yếu nội dung văn bản">
+                    <input type="text" id="doc-number" placeholder="Số / Ký hiệu (Ví dụ: 123/QĐ-SĐ)">
+                    <select id="doc-category">
+                        <option value="Văn bản Bộ Quốc Phòng">Văn bản Bộ Quốc Phòng</option>
+                        <option value="Văn bản Quân Khu">Văn bản Quân Khu</option>
+                        <option value="Văn bản Sư đoàn">Văn bản Sư đoàn</option>
+                        <option value="Thông báo">Thông báo</option>
+                    </select>
+                </div>
+                <div class="upload-grid-2">
+                    <select id="doc-sub-category">
+                        <option value="Bộ Tổng Tham mưu">Văn bản Bộ Tổng Tham mưu</option>
+                        <option value="Tổng Cục Chính trị">Văn bản Tổng Cục Chính trị</option>
+                        <option value="Tổng Cục HC-KT">Văn bản Tổng Cục HC-KT</option>
+                    </select>
+                    <input type="text" id="doc-link" placeholder="Đường link tệp (Google Drive / Đổ dữ liệu file)">
+                    <button class="btn-primary" onclick="addDocument()">Tải Lên Văn Bản</button>
+                </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Số / Ký Hiệu</th>
-                        <th>Trích Yếu Văn Bản</th>
-                        <th>Loại</th>
-                        <th>Thao Tác</th>
-                    </tr>
-                </thead>
-                <tbody id="doc-table-body"></tbody>
-            </table>
+            <!-- MENU DANH MỤC VĂN BẢN -->
+            <div class="tabs-header">
+                <div class="tab-item active">🏛 Văn bản Bộ Quốc Phòng</div>
+                <div class="tab-item">🛡 Văn bản Quân Khu</div>
+                <div class="tab-item">⚔ Văn bản Sư đoàn</div>
+                <div class="tab-item">📢 Thông báo</div>
+            </div>
+
+            <div class="sub-tabs">
+                <div class="sub-tab-item active">Văn bản Bộ Tổng Tham mưu</div>
+                <div class="sub-tab-item">Văn bản Tổng Cục Chính trị</div>
+                <div class="sub-tab-item">Văn bản Tổng Cục HC-KT</div>
+            </div>
+
+            <!-- BẢNG HIỂN THỊ -->
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Số / Ký hiệu</th>
+                            <th style="width: 40%;">Trích yếu nội dung</th>
+                            <th style="width: 20%;">Thuộc đơn vị/cơ quan</th>
+                            <th style="width: 15%;">Ngày phát hành</th>
+                            <th style="width: 10%;">Tệp văn bản</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doc-table-body">
+                        <tr>
+                            <td colspan="5" class="empty-msg">Chưa có văn bản nào trong mục này.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- MỤC 2: QUẢN LÝ THÀNH VIÊN & IP/VỊ TRÍ (CHỈ ADMIN THẤY) -->
-        <div id="admin-section" class="card hidden">
-            <h4>Danh Sách Thành Viên & Định Vị IP/GPS (Admin)</h4>
+        <!-- KHU VỰC QUẢN TRỊ VIÊN (ĐỊNH VỊ IP/GPS & USER) -->
+        <div id="view-admin" class="card hidden">
+            <div class="card-title" style="justify-content: space-between;">
+                <span>👥 QUẢN LÝ THÀNH VIÊN & NHẬT KÝ ĐỊNH VỊ IP/GPS</span>
+                <button onclick="switchView('docs')" style="background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer;">Quay lại Văn bản</button>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>Tên Đăng Nhập</th>
-                        <th>Họ Tên</th>
+                        <th>Họ Tên Quân Nhân</th>
                         <th>Chức Vụ</th>
                         <th>IP Đăng Nhập</th>
-                        <th>Vị Trí / Toạ Độ</th>
-                        <th>Thao Tác</th>
+                        <th>Vị Trí / Tọa Độ thực tế</th>
+                        <th>Thao Tác Admin</th>
                     </tr>
                 </thead>
                 <tbody id="user-table-body"></tbody>
@@ -96,22 +402,20 @@
     let currentLat = null;
     let currentLon = null;
 
-    // Lấy tọa độ GPS trình duyệt nếu người dùng cho phép
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 currentLat = pos.coords.latitude;
                 currentLon = pos.coords.longitude;
             },
-            (err) => console.log('Không lấy được GPS, chuyển sang tra cứu IP')
+            (err) => console.log('Không lấy được GPS, chuyển sang định vị IP')
         );
     }
 
     function toggleMode() {
         isRegisterMode = !isRegisterMode;
-        document.getElementById('form-title').innerText = isRegisterMode ? 'Đăng Ký Tài Khoản' : 'Đăng Nhập';
-        document.getElementById('fullname').classList.toggle('hidden', !isRegisterMode);
-        document.getElementById('btn-submit').innerText = isRegisterMode ? 'Đăng Ký Tài Khoản' : 'Đăng Nhập';
+        document.getElementById('fullname-group').classList.toggle('hidden', !isRegisterMode);
+        document.getElementById('btn-submit').innerText = isRegisterMode ? 'ĐĂNG KÝ TÀI KHOẢN' : 'ĐĂNG NHẬP HỆ THỐNG';
         document.getElementById('toggle-link').innerText = isRegisterMode ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký ngay';
     }
 
@@ -153,9 +457,19 @@
         loadDocuments();
 
         if (currentUser.role === 'admin') {
-            document.getElementById('admin-section').classList.remove('hidden');
             document.getElementById('add-doc-section').classList.remove('hidden');
+            document.getElementById('btn-admin-tab').classList.remove('hidden');
             loadUsers();
+        }
+    }
+
+    function switchView(viewName) {
+        if (viewName === 'admin') {
+            document.getElementById('view-docs').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+        } else {
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('view-docs').classList.remove('hidden');
         }
     }
 
@@ -166,17 +480,19 @@
         tbody.innerHTML = '';
 
         if (docs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Chưa có văn bản nào.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Chưa có văn bản nào trong mục này.</td></tr>';
             return;
         }
 
         docs.forEach(d => {
+            const dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString('vi-VN') : 'N/A';
             tbody.innerHTML += `
                 <tr>
                     <td><b>${d.docNumber}</b></td>
                     <td>${d.title}</td>
                     <td>${d.category}</td>
-                    <td><a href="${d.link}" target="_blank"><button class="btn-action">Xem / Tải về</button></a></td>
+                    <td>${dateStr}</td>
+                    <td><a href="${d.link}" target="_blank" style="color: var(--military-red); font-weight: bold; text-decoration: none;">Xem tệp</a></td>
                 </tr>
             `;
         });
@@ -199,7 +515,6 @@
         if (res.ok) {
             document.getElementById('doc-number').value = '';
             document.getElementById('doc-title').value = '';
-            document.getElementById('doc-category').value = '';
             document.getElementById('doc-link').value = '';
             loadDocuments();
         }
@@ -214,24 +529,24 @@
         users.forEach(u => {
             const isSelf = u.id === currentUser.id;
             const roleBtn = u.role === 'admin' 
-                ? `<button class="btn-action" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ User</button>`
-                : `<button class="btn-action" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng Admin</button>`;
+                ? `<button class="btn-action-sm" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ User</button>`
+                : `<button class="btn-action-sm" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng Admin</button>`;
 
-            const resetPwdBtn = `<button class="btn-action" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
+            const resetPwdBtn = `<button class="btn-action-sm" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
 
             let locDisplay = u.location || 'N/A';
             if (locDisplay.includes('http')) {
-                locDisplay = `<a href="${locDisplay.split(' (')[1].replace(')', '')}" target="_blank">Xem trên Google Maps</a>`;
+                locDisplay = `<a href="${locDisplay.split(' (')[1].replace(')', '')}" target="_blank" style="color: var(--military-red); font-weight: bold;">Mở Google Maps</a>`;
             }
 
             tbody.innerHTML += `
                 <tr>
                     <td>${u.username}</td>
                     <td>${u.fullname || '-'}</td>
-                    <td><span class="${u.role === 'admin' ? 'admin-badge' : ''}">${u.role}</span></td>
+                    <td><b style="color: ${u.role === 'admin' ? 'red' : 'green'};">${u.role}</b></td>
                     <td>${u.lastIp || u.ip || 'N/A'}</td>
                     <td>${locDisplay}</td>
-                    <td>${roleBtn}${resetPwdBtn}</td>
+                    <td>${roleBtn} ${resetPwdBtn}</td>
                 </tr>
             `;
         });
