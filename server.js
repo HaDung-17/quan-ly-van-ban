@@ -9,10 +9,12 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Kết nối MongoDB Cloud
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sudoan307';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Đã kết nối MongoDB Cloud thành công'))
-  .catch(err => console.error('Lỗi kết nối DB:', err));
+const MONGODB_URI = process.env.MONGODB_URI;
+if (MONGODB_URI) {
+  mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Đã kết nối MongoDB Cloud thành công'))
+    .catch(err => console.error('Lỗi kết nối DB:', err));
+}
 
 // Schema Văn bản
 const DocumentSchema = new mongoose.Schema({
@@ -82,6 +84,16 @@ app.delete('/api/documents/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// Trả về file index.html cho giao diện
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
