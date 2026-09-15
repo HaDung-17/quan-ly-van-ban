@@ -1,818 +1,230 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HỆ THỐNG VĂN BẢN NỘI BỘ SƯ ĐOÀN 307, QUÂN KHU 5</title>
-    <style>
-        :root {
-            --military-red: #8b1515;
-            --military-dark-red: #670e0e;
-            --military-gold: #f5c518;
-            --bg-color: #f0f2f5;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: #333;
-        }
-
-        /* HEADER */
-        .header {
-            background-color: var(--military-red);
-            color: white;
-            padding: 12px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .header-title {
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-title span.star {
-            color: var(--military-gold);
-            font-size: 22px;
-        }
-
-        .user-nav {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-nav button {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-
-        .user-nav button:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .user-nav button.btn-logout {
-            background: #222;
-            border: none;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 15px;
-        }
-
-        .hidden { display: none !important; }
-
-        /* AUTH FORM */
-        .auth-card {
-            max-width: 400px;
-            margin: 60px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-            border-top: 5px solid var(--military-red);
-        }
-
-        .auth-header {
-            background: var(--military-red);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .auth-body {
-            padding: 25px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .btn-primary {
-            width: 100%;
-            background: var(--military-red);
-            color: white;
-            border: none;
-            padding: 11px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-primary:hover {
-            background: var(--military-dark-red);
-        }
-
-        /* CARD */
-        .card {
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card-title {
-            font-weight: bold;
-            font-size: 15px;
-            color: var(--military-red);
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .upload-grid {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .upload-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 2fr 1fr;
-            gap: 12px;
-        }
-
-        input[type="text"], input[type="date"], select {
-            padding: 9px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-            font-size: 13px;
-        }
-
-        /* TABS HỆ THỐNG */
-        .tabs-header {
-            display: flex;
-            border-bottom: 2px solid #ddd;
-            margin-top: 25px;
-            gap: 10px;
-        }
-
-        .tab-item {
-            padding: 10px 18px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #555;
-            border-bottom: 3px solid transparent;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .tab-item.active {
-            color: var(--military-red);
-            border-bottom-color: var(--military-red);
-        }
-
-        .sub-tabs, .child-tabs {
-            display: flex;
-            gap: 10px;
-            margin: 12px 0;
-            flex-wrap: wrap;
-        }
-
-        .sub-tab-item {
-            background: #e9ecef;
-            padding: 6px 16px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #495057;
-            transition: 0.2s;
-        }
-
-        .sub-tab-item:hover {
-            background: #dee2e6;
-        }
-
-        .sub-tab-item.active {
-            background: var(--military-red);
-            color: white;
-        }
-
-        .child-tab-item {
-            background: #ffffff;
-            border: 1px solid #ced4da;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            color: #333;
-        }
-
-        .child-tab-item.active {
-            background: #6c757d;
-            color: white;
-            border-color: #6c757d;
-            font-weight: bold;
-        }
-
-        /* BẢNG DỮ LIỆU */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-
-        th {
-            background: var(--military-dark-red);
-            color: white;
-            padding: 11px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 11px;
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .btn-action-sm {
-            padding: 4px 8px;
-            font-size: 11px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            color: white;
-            margin-right: 2px;
-        }
-
-        .empty-msg {
-            text-align: center;
-            color: #777;
-            padding: 30px 0;
-            font-style: italic;
-        }
-    </style>
-
-    <!-- ICON WEB -->
-    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/ID_ANH_CUA_ANH">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Tra Cứu Văn Bản - Sư Đoàn 307</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .preview-container {
+      position: relative;
+      width: 100%;
+      height: 75vh;
+    }
+    .preview-container iframe {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%; border: none;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800">
 
-<!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ -->
-<div id="auth-box">
-    <div class="auth-card">
-        <div class="auth-header">
-            <span style="color: var(--military-gold);">★</span> SƯ ĐOÀN 307 - ĐĂNG NHẬP
-        </div>
-        <div class="auth-body">
-            <div class="form-group">
-                <label>Tên đăng nhập</label>
-                <input type="text" id="username" placeholder="Nhập tên đăng nhập">
-            </div>
-            <div class="form-group">
-                <label>Mật khẩu</label>
-                <input type="password" id="password" placeholder="Nhập mật khẩu">
-            </div>
-            <div class="form-group hidden" id="fullname-group">
-                <label>Họ và tên quân nhân</label>
-                <input type="text" id="fullname" placeholder="Ví dụ: Nguyễn Văn A">
-            </div>
-            <button class="btn-primary" id="btn-submit" onclick="login()">ĐĂNG NHẬP HỆ THỐNG</button>
-            <p style="text-align: center; margin-top: 15px; font-size: 12px;">
-                <a href="#" id="toggle-link" onclick="toggleMode()" style="color: var(--military-red); text-decoration: none;">Chưa có tài khoản? Đăng ký ngay</a>
-            </p>
-        </div>
+  <!-- Header -->
+  <header class="bg-red-800 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Sư Đoàn 307 - Văn Bản</h1>
+      <button id="authBtn" onclick="toggleRole()" class="bg-yellow-500 hover:bg-yellow-600 text-red-950 font-bold px-3 py-1.5 rounded-lg text-sm transition">
+        Quyền: User (Bấm để đổi Admin)
+      </button>
     </div>
-</div>
+  </header>
 
-<!-- MÀN HÌNH CHÍNH -->
-<div id="main-box" class="hidden">
-    <!-- HEADER -->
-    <div class="header">
-        <div class="header-title">
-            <span class="star">★</span>
-            HỆ THỐNG VĂN BẢN NỘI BỘ SƯ ĐOÀN 307, QUÂN KHU 5
-        </div>
-        <div class="user-nav">
-            <span style="font-size: 13px;">👤 <b id="user-display"></b> (<span id="role-display" style="color: var(--military-gold);"></span>)</span>
-            <button id="btn-admin-tab" class="hidden" onclick="switchView('admin')" style="background: var(--military-gold); color: #000; font-weight: bold;">Quản trị viên</button>
-            <button onclick="logout()" class="btn-logout">Thoát</button>
-        </div>
+  <main class="max-w-6xl mx-auto p-3 md:p-6 space-y-6">
+
+    <!-- Thanh Tìm Kiếm Thông Minh -->
+    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
+      <div class="relative">
+        <input type="text" id="searchInput" oninput="handleSearch()" 
+               placeholder="Nhập từ khóa (Ví dụ: 390, 03/9, Nghị quyết, Đảng ủy...)" 
+               class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-800 text-base">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-gray-400 text-lg"></i>
+      </div>
     </div>
 
-    <div class="container">
-        <!-- KHU VỰC VĂN BẢN -->
-        <div id="view-docs">
-            <!-- PANEL ĐĂNG TẢI (CHỈ ADMIN THẤY) -->
-            <div id="add-doc-section" class="card hidden">
-                <div class="card-title">
-                    ⬆ ĐĂNG TẢI VĂN BẢN MỚI (QUẢN TRỊ VIÊN)
-                </div>
-                <div class="upload-grid">
-                    <input type="text" id="doc-title" placeholder="Trích yếu nội dung văn bản">
-                    <input type="text" id="doc-number" placeholder="Số / Ký hiệu (Ví dụ: 123/QĐ-SĐ)">
-                    <input type="date" id="doc-date" title="Ngày phát hành của cơ quan ban hành">
-                    <select id="doc-category" onchange="updateFormSubCategories()">
-                        <option value="Văn bản Bộ Quốc Phòng">Văn bản Bộ Quốc Phòng</option>
-                        <option value="Văn bản Quân Khu">Văn bản Quân Khu</option>
-                        <option value="Văn bản Sư đoàn">Văn bản Sư đoàn</option>
-                    </select>
-                </div>
-                <div class="upload-grid-2">
-                    <select id="doc-sub-category" onchange="updateFormChildCategories()"></select>
-                    <select id="doc-child-category"></select>
-                    <input type="text" id="doc-link" placeholder="Đường link tệp (Google Drive / Đổ dữ liệu file)">
-                    <button class="btn-primary" onclick="addDocument()">Tải Lên Văn Bản</button>
-                </div>
-            </div>
-
-            <!-- TABS MỤC LỚN -->
-            <div class="tabs-header">
-                <div class="tab-item active" onclick="selectMainTab('Văn bản Bộ Quốc Phòng', this)">🏛 Văn bản Bộ Quốc Phòng</div>
-                <div class="tab-item" onclick="selectMainTab('Văn bản Quân Khu', this)">🛡 Văn bản Quân Khu</div>
-                <div class="tab-item" onclick="selectMainTab('Văn bản Sư đoàn', this)">⚔ Văn bản Sư đoàn</div>
-            </div>
-
-            <!-- TABS MỤC CON -->
-            <div class="sub-tabs" id="sub-tabs-container"></div>
-
-            <!-- TABS MỤC CHÁU -->
-            <div class="child-tabs" id="child-tabs-container"></div>
-
-            <!-- BẢNG HIỂN THỊ -->
-            <div class="card" style="padding: 0; overflow: hidden;">
-                <table>
-                    <thead>
-                        <tr id="doc-table-header">
-                            <th style="width: 15%;">Số / Ký hiệu</th>
-                            <th style="width: 35%;">Trích yếu nội dung</th>
-                            <th style="width: 20%;">Thuộc đơn vị/cơ quan</th>
-                            <th style="width: 15%;">Ngày phát hành</th>
-                            <th style="width: 10%;">Tệp văn bản</th>
-                            <th id="th-action" class="hidden" style="width: 5%;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="doc-table-body">
-                        <tr>
-                            <td colspan="6" class="empty-msg">Chưa có văn bản nào trong mục này.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- KHU VỰC QUẢN TRỊ VIÊN -->
-        <div id="view-admin" class="card hidden">
-            <div class="card-title" style="justify-content: space-between;">
-                <span>👥 QUẢN LÝ THÀNH VIÊN & NHẬT KÝ ĐỊNH VỊ IP/GPS</span>
-                <button onclick="switchView('docs')" style="background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer;">Quay lại Văn bản</button>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tên Đăng Nhập</th>
-                        <th>Họ Tên Quân Nhân</th>
-                        <th>Chức Vụ</th>
-                        <th>IP & Thời Gian Đăng Nhập Gần Nhất</th>
-                        <th>Vị Trí / Tọa Độ thực tế</th>
-                        <th>Thao Tác Admin</th>
-                    </tr>
-                </thead>
-                <tbody id="user-table-body"></tbody>
-            </table>
-        </div>
+    <!-- Form Thêm/Sửa Tài Liệu (Chỉ hiển thị khi là Admin) -->
+    <div id="adminFormCard" class="hidden bg-white p-5 rounded-xl shadow-md border-l-4 border-red-800 space-y-4">
+      <h2 id="formTitle" class="text-lg font-bold text-red-800">Đăng Văn Bản Mới</h2>
+      <input type="hidden" id="editDocId">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input type="text" id="docTitle" placeholder="Tiêu đề văn bản" class="p-2.5 border rounded-lg w-full">
+        <input type="text" id="docNumber" placeholder="Số/Ký hiệu (VD: 390-NQ/ĐU)" class="p-2.5 border rounded-lg w-full">
+        <input type="text" id="effectiveDate" placeholder="Ngày hiệu lực (VD: 03/9/2026)" class="p-2.5 border rounded-lg w-full">
+        <input type="text" id="issuer" placeholder="Cơ quan ban hành (VD: Đảng uỷ PTM)" class="p-2.5 border rounded-lg w-full">
+        <input type="text" id="thumbnail" placeholder="Link ảnh đại diện (Tùy chọn)" class="p-2.5 border rounded-lg w-full md:col-span-2">
+        <input type="text" id="fileUrl" placeholder="Link tệp văn bản (PDF / Google Drive view link)" class="p-2.5 border rounded-lg w-full md:col-span-2">
+        <textarea id="summary" placeholder="Mô tả tóm tắt nội dung văn bản..." class="p-2.5 border rounded-lg w-full md:col-span-2 h-20"></textarea>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="saveDocument()" class="bg-red-800 text-white font-bold px-5 py-2 rounded-lg hover:bg-red-900 transition">Lưu Văn Bản</button>
+        <button onclick="resetForm()" class="bg-gray-400 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-500 transition">Hủy</button>
+      </div>
     </div>
-</div>
 
-<script>
-    const childCategoriesList = [
-        "Nghị quyết",
-        "Quyết định",
-        "Chỉ thị",
-        "Quy định",
-        "Thông báo",
-        "Văn bản khác"
-    ];
+    <!-- Danh sách văn bản dạng Thẻ Báo Chí (Tối ưu tuyệt đối trên Điện thoại) -->
+    <div id="documentList" class="space-y-4"></div>
 
-    const categoryStructure = {
-        "Văn bản Bộ Quốc Phòng": {
-            "Văn bản Bộ Tổng Tham mưu": [],
-            "Văn bản Tổng Cục Chính trị": [],
-            "Văn bản Tổng Cục HC-KT": []
-        },
-        "Văn bản Quân Khu": {
-            "Văn bản BTL QK": [],
-            "Văn bản Bộ Tham mưu": [],
-            "Văn bản Cục Chính trị": [],
-            "Văn bản Cục HC-KT": []
-        },
-        "Văn bản Sư đoàn": {
-            "Văn bản SĐ": childCategoriesList,
-            "Văn bản PTM": childCategoriesList,
-            "Văn bản PCT": childCategoriesList,
-            "Văn bản Phòng HC-KT": childCategoriesList,
-            "Văn bản khác": []
-        }
-    };
+  </main>
 
-    let currentMainTab = "Văn bản Bộ Quốc Phòng";
-    let currentSubTab = "Văn bản Bộ Tổng Tham mưu";
-    let currentChildTab = "";
+  <!-- Modal Xem Tệp Văn Bản (Full màn hình Mobile) -->
+  <div id="fileModal" class="fixed inset-0 bg-black/70 hidden z-50 flex items-center justify-center p-2 md:p-6">
+    <div class="bg-white w-full max-w-5xl rounded-xl overflow-hidden flex flex-col h-[90vh]">
+      <div class="p-4 bg-red-800 text-white flex justify-between items-center">
+        <h3 id="modalDocTitle" class="font-bold truncate pr-4 text-sm md:text-base">Xem Văn Bản</h3>
+        <button onclick="closeModal()" class="text-white hover:text-gray-300 font-bold text-xl px-2">&times;</button>
+      </div>
+      <div class="flex-1 bg-gray-200 preview-container">
+        <iframe id="fileIframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
 
-    let isRegisterMode = false;
-    let currentUser = null;
-    let currentLat = null;
-    let currentLon = null;
-    let allDocuments = [];
+  <script>
+    let isAdmin = false;
+    let searchTimeout = null;
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                currentLat = pos.coords.latitude;
-                currentLon = pos.coords.longitude;
-            },
-            (err) => console.log('Không lấy được GPS, chuyển sang định vị IP')
-        );
+    function toggleRole() {
+      isAdmin = !isAdmin;
+      document.getElementById('authBtn').innerText = isAdmin ? 'Quyền: ADMIN (Đang bật)' : 'Quyền: User (Bấm để đổi Admin)';
+      document.getElementById('adminFormCard').classList.toggle('hidden', !isAdmin);
+      fetchDocuments();
     }
 
-    function toggleMode() {
-        isRegisterMode = !isRegisterMode;
-        document.getElementById('fullname-group').classList.toggle('hidden', !isRegisterMode);
-        document.getElementById('btn-submit').innerText = isRegisterMode ? 'ĐĂNG KÝ TÀI KHOẢN' : 'ĐĂNG NHẬP HỆ THỐNG';
-        document.getElementById('toggle-link').innerText = isRegisterMode ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký ngay';
+    async function fetchDocuments(keyword = '') {
+      const res = await fetch(`/api/documents?q=${encodeURIComponent(keyword)}`);
+      const result = await res.json();
+      if(result.success) renderDocuments(result.data);
     }
 
-    async function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const fullname = document.getElementById('fullname').value;
+    function renderDocuments(docs) {
+      const container = document.getElementById('documentList');
+      if(docs.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-gray-500 font-medium">Không tìm thấy văn bản phù hợp.</div>`;
+        return;
+      }
 
-        const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-        const payload = isRegisterMode 
-            ? { username, password, fullname } 
-            : { username, password, lat: currentLat, lon: currentLon };
+      container.innerHTML = docs.map(doc => `
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 flex flex-col md:flex-row hover:shadow-lg transition">
+          <div class="md:w-48 h-40 md:h-auto bg-gray-100 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+            ${doc.thumbnail 
+              ? `<img src="${doc.thumbnail}" class="w-full h-full object-cover" alt="Preview">` 
+              : `<div class="text-center text-red-800 p-4"><i class="fa-solid fa-file-pdf text-5xl mb-1"></i><p class="text-xs font-semibold">VĂN BẢN</p></div>`}
+          </div>
+          
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex flex-wrap gap-2 text-xs mb-2">
+                <span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded">${doc.docNumber || 'Không số'}</span>
+                <span class="bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded"><i class="fa-regular fa-calendar-check mr-1"></i>${doc.effectiveDate || 'N/A'}</span>
+                <span class="bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded"><i class="fa-solid fa-building mr-1"></i>${doc.issuer || 'Nội bộ'}</span>
+              </div>
+              <h3 class="font-bold text-gray-900 text-base md:text-lg leading-snug mb-2">${doc.title}</h3>
+              <p class="text-gray-600 text-sm line-clamp-2">${doc.summary || 'Chưa có tóm tắt nội dung.'}</p>
+            </div>
 
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        alert(data.message);
-
-        if (res.ok) {
-            if (isRegisterMode) {
-                toggleMode();
-            } else {
-                currentUser = data.user;
-                showMainScreen();
-            }
-        }
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+              <button onclick="openFile('${doc.fileUrl}', '${escapeHtml(doc.title)}')" class="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-eye"></i> Xem tệp
+              </button>
+              
+              ${isAdmin ? `
+                <div class="flex gap-2">
+                  <button onclick="editDoc('${doc._id}', '${escapeHtml(doc.title)}', '${escapeHtml(doc.docNumber)}', '${escapeHtml(doc.effectiveDate)}', '${escapeHtml(doc.issuer)}', '${escapeHtml(doc.thumbnail || '')}', '${escapeHtml(doc.fileUrl)}', '${escapeHtml(doc.summary || '')}')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
+                    <i class="fa-solid fa-pen"></i> Sửa
+                  </button>
+                  <button onclick="deleteDoc('${doc._id}')" class="bg-gray-600 hover:bg-red-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
+                    <i class="fa-solid fa-trash"></i> Xóa
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
 
-    function showMainScreen() {
-        document.getElementById('auth-box').classList.add('hidden');
-        document.getElementById('main-box').classList.remove('hidden');
-        document.getElementById('user-display').innerText = currentUser.fullname || currentUser.username;
-        document.getElementById('role-display').innerText = currentUser.role;
-
-        renderSubTabs();
-        updateFormSubCategories();
-        loadDocuments();
-
-        if (currentUser.role === 'admin') {
-            document.getElementById('add-doc-section').classList.remove('hidden');
-            document.getElementById('btn-admin-tab').classList.remove('hidden');
-            document.getElementById('th-action').classList.remove('hidden');
-            loadUsers();
-        }
+    function handleSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const val = document.getElementById('searchInput').value;
+        fetchDocuments(val);
+      }, 300);
     }
 
-    function selectMainTab(mainTab, element) {
-        currentMainTab = mainTab;
-        document.querySelectorAll('.tabs-header .tab-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
+    async function saveDocument() {
+      const id = document.getElementById('editDocId').value;
+      const payload = {
+        title: document.getElementById('docTitle').value,
+        docNumber: document.getElementById('docNumber').value,
+        effectiveDate: document.getElementById('effectiveDate').value,
+        issuer: document.getElementById('issuer').value,
+        thumbnail: document.getElementById('thumbnail').value,
+        fileUrl: document.getElementById('fileUrl').value,
+        summary: document.getElementById('summary').value,
+      };
 
-        const subObj = categoryStructure[mainTab];
-        const subKeys = Object.keys(subObj);
-        currentSubTab = subKeys.length > 0 ? subKeys[0] : '';
-        
-        const childArr = subObj[currentSubTab] || [];
-        currentChildTab = childArr.length > 0 ? childArr[0] : '';
+      const url = id ? `/api/documents/${id}` : '/api/documents';
+      const method = id ? 'PUT' : 'POST';
 
-        renderSubTabs();
-        filterAndDisplayDocs();
+      await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      resetForm();
+      fetchDocuments();
     }
 
-    function selectSubTab(subTab, element) {
-        currentSubTab = subTab;
-        document.querySelectorAll('.sub-tabs .sub-tab-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-
-        const childArr = categoryStructure[currentMainTab][subTab] || [];
-        currentChildTab = childArr.length > 0 ? childArr[0] : '';
-
-        renderChildTabs();
-        filterAndDisplayDocs();
+    function editDoc(id, title, docNumber, effectiveDate, issuer, thumbnail, fileUrl, summary) {
+      document.getElementById('editDocId').value = id;
+      document.getElementById('docTitle').value = title;
+      document.getElementById('docNumber').value = docNumber;
+      document.getElementById('effectiveDate').value = effectiveDate;
+      document.getElementById('issuer').value = issuer;
+      document.getElementById('thumbnail').value = thumbnail;
+      document.getElementById('fileUrl').value = fileUrl;
+      document.getElementById('summary').value = summary;
+      
+      document.getElementById('formTitle').innerText = "Chỉnh Sửa Văn Bản";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function selectChildTab(childTab, element) {
-        currentChildTab = childTab;
-        document.querySelectorAll('.child-tabs .child-tab-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        filterAndDisplayDocs();
+    async function deleteDoc(id) {
+      if(confirm('Anh có chắc muốn xóa văn bản này?')) {
+        await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+        fetchDocuments();
+      }
     }
 
-    function renderSubTabs() {
-        const container = document.getElementById('sub-tabs-container');
-        container.innerHTML = '';
-        const subObj = categoryStructure[currentMainTab];
-        const subKeys = Object.keys(subObj);
-
-        subKeys.forEach((sub, index) => {
-            const activeClass = index === 0 ? 'active' : '';
-            container.innerHTML += `<div class="sub-tab-item ${activeClass}" onclick="selectSubTab('${sub}', this)">${sub}</div>`;
-        });
-
-        renderChildTabs();
+    function resetForm() {
+      document.getElementById('editDocId').value = '';
+      document.getElementById('docTitle').value = '';
+      document.getElementById('docNumber').value = '';
+      document.getElementById('effectiveDate').value = '';
+      document.getElementById('issuer').value = '';
+      document.getElementById('thumbnail').value = '';
+      document.getElementById('fileUrl').value = '';
+      document.getElementById('summary').value = '';
+      document.getElementById('formTitle').innerText = "Đăng Văn Bản Mới";
     }
 
-    function renderChildTabs() {
-        const container = document.getElementById('child-tabs-container');
-        container.innerHTML = '';
-        const childArr = categoryStructure[currentMainTab][currentSubTab] || [];
-
-        if (childArr.length === 0) {
-            container.style.display = 'none';
-            return;
-        }
-
-        container.style.display = 'flex';
-        childArr.forEach((child, index) => {
-            const activeClass = index === 0 ? 'active' : '';
-            container.innerHTML += `<div class="child-tab-item ${activeClass}" onclick="selectChildTab('${child}', this)">${child}</div>`;
-        });
+    function openFile(url, title) {
+      document.getElementById('modalDocTitle').innerText = title;
+      document.getElementById('fileIframe').src = url;
+      document.getElementById('fileModal').classList.remove('hidden');
     }
 
-    function updateFormSubCategories() {
-        const mainCat = document.getElementById('doc-category').value;
-        const subSelect = document.getElementById('doc-sub-category');
-        subSelect.innerHTML = '';
-
-        const subObj = categoryStructure[mainCat];
-        const subKeys = Object.keys(subObj);
-
-        subKeys.forEach(sub => {
-            subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-        });
-
-        updateFormChildCategories();
+    function closeModal() {
+      document.getElementById('fileModal').classList.add('hidden');
+      document.getElementById('fileIframe').src = '';
     }
 
-    function updateFormChildCategories() {
-        const mainCat = document.getElementById('doc-category').value;
-        const subCat = document.getElementById('doc-sub-category').value;
-        const childSelect = document.getElementById('doc-child-category');
-        childSelect.innerHTML = '';
-
-        const childArr = categoryStructure[mainCat]?.[subCat] || [];
-
-        if (childArr.length === 0) {
-            childSelect.style.display = 'none';
-        } else {
-            childSelect.style.display = 'block';
-            childArr.forEach(c => {
-                childSelect.innerHTML += `<option value="${c}">${c}</option>`;
-            });
-        }
+    function escapeHtml(str) {
+      return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
-    async function loadDocuments() {
-        const res = await fetch('/api/documents');
-        allDocuments = await res.json();
-        filterAndDisplayDocs();
-    }
-
-    function filterAndDisplayDocs() {
-        const tbody = document.getElementById('doc-table-body');
-        tbody.innerHTML = '';
-
-        const filtered = allDocuments.filter(d => {
-            const matchMain = d.category === currentMainTab;
-            const matchSub = d.subCategory === currentSubTab;
-            const matchChild = currentChildTab ? (d.childCategory === currentChildTab) : true;
-            return matchMain && matchSub && matchChild;
-        });
-
-        if (filtered.length === 0) {
-            const colSpanVal = (currentUser && currentUser.role === 'admin') ? 6 : 5;
-            tbody.innerHTML = `<tr><td colspan="${colSpanVal}" class="empty-msg">Chưa có văn bản nào trong mục này.</td></tr>`;
-            return;
-        }
-
-        filtered.forEach(d => {
-            let dateStr = 'N/A';
-            if (d.issueDate) {
-                const parts = d.issueDate.split('-');
-                if (parts.length === 3) dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            } else if (d.createdAt) {
-                dateStr = new Date(d.createdAt).toLocaleDateString('vi-VN');
-            }
-
-            let deptLabel = d.subCategory;
-            if (d.childCategory) deptLabel += ` - ${d.childCategory}`;
-
-            let actionTd = '';
-            if (currentUser && currentUser.role === 'admin') {
-                actionTd = `<td><button class="btn-action-sm" style="background:#dc3545;" onclick="deleteDocument('${d.id}', '${d.docNumber}')">Xóa</button></td>`;
-            }
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${d.docNumber}</b></td>
-                    <td>${d.title}</td>
-                    <td>${deptLabel}</td>
-                    <td>${dateStr}</td>
-                    <td><a href="${d.link}" target="_blank" style="color: var(--military-red); font-weight: bold; text-decoration: none;">Xem tệp</a></td>
-                    ${actionTd}
-                </tr>
-            `;
-        });
-    }
-
-    async function addDocument() {
-        const docNumber = document.getElementById('doc-number').value;
-        const title = document.getElementById('doc-title').value;
-        const issueDate = document.getElementById('doc-date').value;
-        const category = document.getElementById('doc-category').value;
-        const subCategory = document.getElementById('doc-sub-category').value;
-        
-        const childSelect = document.getElementById('doc-child-category');
-        const childCategory = childSelect.style.display === 'none' ? '' : childSelect.value;
-        
-        const link = document.getElementById('doc-link').value;
-
-        const res = await fetch('/api/documents', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docNumber, title, category, subCategory, childCategory, link, issueDate })
-        });
-
-        const data = await res.json();
-        alert(data.message);
-        if (res.ok) {
-            document.getElementById('doc-number').value = '';
-            document.getElementById('doc-title').value = '';
-            document.getElementById('doc-date').value = '';
-            document.getElementById('doc-link').value = '';
-            loadDocuments();
-        }
-    }
-
-    async function deleteDocument(docId, docNumber) {
-        if (!confirm(`Bạn có chắc chắn muốn XÓA văn bản số "${docNumber}" khỏi hệ thống không?`)) return;
-        const res = await fetch('/api/admin/delete-document', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docId })
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (res.ok) loadDocuments();
-    }
-
-    function switchView(viewName) {
-        if (viewName === 'admin') {
-            document.getElementById('view-docs').classList.add('hidden');
-            document.getElementById('view-admin').classList.remove('hidden');
-        } else {
-            document.getElementById('view-admin').classList.add('hidden');
-            document.getElementById('view-docs').classList.remove('hidden');
-        }
-    }
-
-    async function loadUsers() {
-        const res = await fetch('/api/admin/users');
-        const users = await res.json();
-        const tbody = document.getElementById('user-table-body');
-        tbody.innerHTML = '';
-
-        if (users.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">Chưa có dữ liệu thành viên.</td></tr>';
-            return;
-        }
-
-        users.forEach(u => {
-            const isSelf = u.id === currentUser.id;
-            const roleBtn = u.role === 'admin' 
-                ? `<button class="btn-action-sm" style="background:#6c757d;" ${isSelf ? 'disabled' : ''} onclick="changeRole('${u.id}', 'user')">Hạ User</button>`
-                : `<button class="btn-action-sm" style="background:#28a745;" onclick="changeRole('${u.id}', 'admin')">Thăng Admin</button>`;
-
-            const resetPwdBtn = `<button class="btn-action-sm" style="background:#ffc107; color:#000;" onclick="resetPassword('${u.id}', '${u.username}')">Đổi MK</button>`;
-            
-            const deleteBtn = `<button class="btn-action-sm" style="background:#dc3545;" ${isSelf ? 'disabled' : ''} onclick="deleteUser('${u.id}', '${u.username}')">Xóa</button>`;
-
-            let locDisplay = u.location || 'Chưa xác định';
-            if (locDisplay.includes('http')) {
-                locDisplay = `<a href="${locDisplay.split(' (')[1].replace(')', '')}" target="_blank" style="color: var(--military-red); font-weight: bold;">Mở Google Maps</a>`;
-            }
-
-            const lastLogin = u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('vi-VN') : 'Chưa đăng nhập';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${u.username}</b></td>
-                    <td>${u.fullname || '-'}</td>
-                    <td><b style="color: ${u.role === 'admin' ? 'red' : 'green'};">${u.role}</b></td>
-                    <td>${u.lastIp || u.ip || 'N/A'}<br><small style="color:#666;">Lần cuối: ${lastLogin}</small></td>
-                    <td>${locDisplay}</td>
-                    <td>${roleBtn} ${resetPwdBtn} ${deleteBtn}</td>
-                </tr>
-            `;
-        });
-    }
-
-    async function changeRole(userId, newRole) {
-        if (!confirm(`Chuyển quyền thành ${newRole}?`)) return;
-        const res = await fetch('/api/admin/change-role', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, newRole })
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (res.ok) loadUsers();
-    }
-
-    async function resetPassword(userId, username) {
-        const newPassword = prompt(`Nhập mật khẩu mới cho "${username}":`);
-        if (!newPassword) return;
-        const res = await fetch('/api/admin/reset-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, newPassword })
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (res.ok) loadUsers();
-    }
-
-    async function deleteUser(userId, username) {
-        if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản "${username}" không?`)) return;
-        const res = await fetch('/api/admin/delete-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (res.ok) loadUsers();
-    }
-
-    function logout() {
-        location.reload();
-    }
-</script>
-
+    fetchDocuments();
+  </script>
 </body>
 </html>
