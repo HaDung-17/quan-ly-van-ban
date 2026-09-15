@@ -10,27 +10,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Kết nối MongoDB Cloud
 const MONGODB_URI = process.env.MONGODB_URI;
-if (MONGODB_URI) {
-  mongoose.connect(MONGODB_URI)
-    .then(() => console.log('Đã kết nối MongoDB Cloud thành công'))
-    .catch(err => console.error('Lỗi kết nối DB:', err));
-}
+
+// Middleware tự động kết nối DB trước mỗi request
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    if (MONGODB_URI) {
+      try {
+        await mongoose.connect(MONGODB_URI);
+      } catch (err) {
+        return res.status(500).json({ success: false, message: 'Lỗi kết nối CSDL: ' + err.message });
+      }
+    }
+  }
+  next();
+});
 
 // Schema Văn bản
 const DocumentSchema = new mongoose.Schema({
-  title: String,          // Tiêu đề văn bản
-  docNumber: String,      // Số văn bản (VD: 390-NQ/ĐU)
-  effectiveDate: String, // Ngày hiệu lực / Ngày ban hành
-  issuer: String,         // Cơ quan ban hành
-  summary: String,        // Nội dung tóm tắt / xem trước
-  thumbnail: String,      // Link ảnh đại diện/xem trước
-  fileUrl: String,        // Link tệp văn bản (PDF/Drive/Cloudinary)
+  title: String,
+  docNumber: String,
+  effectiveDate: String,
+  issuer: String,
+  summary: String,
+  thumbnail: String,
+  fileUrl: String,
   createdAt: { type: Date, default: Date.now }
 });
 
-const Document = mongoose.model('Document', DocumentSchema);
+const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
 
-// API 1: Lấy danh sách văn bản (Tích hợp Tìm kiếm thông minh)
+// API 1: Lấy danh sách văn bản (Tìm kiếm)
 app.get('/api/documents', async (req, res) => {
   try {
     const { q } = req.query;
@@ -89,11 +98,6 @@ app.delete('/api/documents/:id', async (req, res) => {
 // Trả về file index.html cho giao diện
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
