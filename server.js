@@ -7,26 +7,24 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Phục vụ file tĩnh trong thư mục public
+// File tĩnh
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Kết nối MongoDB Cloud
+// Kết nối CSDL
 const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(async (req, res, next) => {
   if (mongoose.connection.readyState !== 1 && MONGODB_URI) {
     try {
-      await mongoose.connect(MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000
-      });
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
     } catch (err) {
-      console.error('Lỗi kết nối DB:', err);
+      console.error('Lỗi DB:', err);
     }
   }
   next();
 });
 
-// Schema Văn bản
+// Schema Văn bản & Cấu hình Admin
 const DocumentSchema = new mongoose.Schema({
   title: String,
   docNumber: String,
@@ -38,25 +36,77 @@ const DocumentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
+const ConfigSchema = new mongoose.Schema({
+  key: { type: String, default: 'admin_password' },
+  value: String
+});
 
-// API Lấy danh sách văn bản
+const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
+const Config = mongoose.models.Config || mongoose.model('Config', ConfigSchema);
+
+// API Xác thực Admin (Mật khẩu mặc định: 3072026)
+app.post('/api/auth/verify', async (req, res) => {
+  try {
+    const { password } = req.body;
+    let config = await Config.findOne({ key: 'admin_password' });
+    if (!config) {
+      config = new Config({ key: 'admin_password', value: '3072026' });
+      await config.save();
+    }
+    if (password === config.value) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'Mật khẩu sai' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API Đổi Mật Khẩu Admin
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    const { currentPass, newPass } = req.body;
+    let config = await Config.findOne({ key: 'admin_password' });
+    const validPass = config ? config.value : '3072026';
+
+    if (currentPass !== validPass) {
+      return res.json({ success: false, message: 'Mật khẩu hiện tại không đúng' });
+    }
+
+    if (!config) {
+      config = new Config({ key: 'admin_password', value: newPass });
+    } else {
+      config.value = newPass;
+    }
+    await config.save();
+    res.json({ success: true, message: 'Đổi mật khẩu thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API Lấy danh sách văn bản (Lọc theo từ khóa & Cây thư mục)
 app.get('/api/documents', async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, category } = req.query;
     let query = {};
+    
+    if (category) {
+      query.issuer = category;
+    }
+
     if (q) {
       const searchRegex = new RegExp(q, 'i');
-      query = {
-        $or: [
-          { title: searchRegex },
-          { docNumber: searchRegex },
-          { effectiveDate: searchRegex },
-          { issuer: searchRegex },
-          { summary: searchRegex }
-        ]
-      };
+      query.$or = [
+        { title: searchRegex },
+        { docNumber: searchRegex },
+        { effectiveDate: searchRegex },
+        { issuer: searchRegex },
+        { summary: searchRegex }
+      ];
     }
+
     const docs = await Document.find(query).sort({ createdAt: -1 });
     res.json({ success: true, data: docs });
   } catch (err) {
@@ -64,7 +114,7 @@ app.get('/api/documents', async (req, res) => {
   }
 });
 
-// API Đăng văn bản mới
+// API Đăng văn bản
 app.post('/api/documents', async (req, res) => {
   try {
     const newDoc = new Document(req.body);
@@ -75,7 +125,7 @@ app.post('/api/documents', async (req, res) => {
   }
 });
 
-// API Chỉnh sửa văn bản
+// API Sửa văn bản
 app.put('/api/documents/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -96,7 +146,6 @@ app.delete('/api/documents/:id', async (req, res) => {
   }
 });
 
-// Trả về file index.html cho trang chủ
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
