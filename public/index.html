@@ -1,230 +1,534 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ Thống Tra Cứu Văn Bản - Sư Đoàn 307</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    .preview-container {
-      position: relative;
-      width: 100%;
-      height: 75vh;
-    }
-    .preview-container iframe {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%; border: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SƯ ĐOÀN 307 - QUẢN LÝ VĂN BẢN</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #990000;
+            --primary-dark: #770000;
+            --accent: #d4af37;
+            --bg: #f4f6f9;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #e2e8f0;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo-title { display: flex; align-items: center; gap: 15px; }
+        .logo-title i { font-size: 2rem; color: var(--accent); }
+        .logo-title h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+        .btn-accent { background-color: var(--accent); color: #000; }
+        .btn-accent:hover { background-color: #c39e2e; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+        .btn-outline { background: transparent; border: 1px solid white; color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        /* Main Layout */
+        .main-container { display: flex; flex: 1; }
+        
+        /* Sidebar - Cây thư mục */
+        sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 20px 10px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+        .sidebar-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 15px; padding-left: 10px; font-weight: 700; }
+        .folder-tree ul { list-style: none; padding-left: 15px; }
+        .folder-tree li { margin: 4px 0; }
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+        .folder-item:hover, .folder-item.active { background-color: #334155; color: white; }
+        .folder-item i { color: var(--accent); }
+
+        /* Content Area */
+        .content { flex: 1; padding: 20px; max-width: 1400px; margin: 0 auto; width: 100%; }
+        
+        /* Search Bar */
+        .search-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            font-size: 1rem;
+        }
+        .search-input:focus { border-color: var(--primary); }
+
+        /* Documents Grid/Table */
+        .doc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .doc-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-top: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        .doc-card:hover { transform: translateY(-3px); }
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .doc-number { background: #fee2e2; color: var(--primary); padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; }
+        .doc-date { color: #64748b; font-size: 0.85rem; }
+        .doc-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: #0f172a; line-height: 1.4; }
+        .doc-summary { font-size: 0.9rem; color: #475569; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .doc-thumb { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; }
+        .doc-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: auto; }
+        .doc-actions { display: flex; gap: 6px; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            sidebar { width: 100%; }
+            .header-actions { flex-wrap: wrap; }
+            .logo-title h1 { font-size: 1.1rem; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-  <!-- Header -->
-  <header class="bg-red-800 text-white p-4 shadow-lg sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Sư Đoàn 307 - Văn Bản</h1>
-      <button id="authBtn" onclick="toggleRole()" class="bg-yellow-500 hover:bg-yellow-600 text-red-950 font-bold px-3 py-1.5 rounded-lg text-sm transition">
-        Quyền: User (Bấm để đổi Admin)
-      </button>
+<header>
+    <div class="logo-title">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h1>SƯ ĐOÀN 307 - QUẢN LÝ VĂN BẢN</h1>
     </div>
-  </header>
-
-  <main class="max-w-6xl mx-auto p-3 md:p-6 space-y-6">
-
-    <!-- Thanh Tìm Kiếm Thông Minh -->
-    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-      <div class="relative">
-        <input type="text" id="searchInput" oninput="handleSearch()" 
-               placeholder="Nhập từ khóa (Ví dụ: 390, 03/9, Nghị quyết, Đảng ủy...)" 
-               class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-800 text-base">
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-gray-400 text-lg"></i>
-      </div>
+    <div class="header-actions">
+        <span id="roleBadge" class="btn btn-outline" style="border:none;"><i class="fa-solid fa-user"></i> Quyền: User</span>
+        <button id="authBtn" class="btn btn-accent" onclick="toggleAuth()"><i class="fa-solid fa-key"></i> Đăng nhập Admin</button>
+        <button id="changePassBtn" class="btn btn-outline" style="display:none;" onclick="openChangePassModal()"><i class="fa-solid fa-lock"></i> Đổi Mật Khẩu</button>
+        <button id="addDocBtn" class="btn btn-accent" style="display:none;" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> Đăng Văn Bản</button>
     </div>
+</header>
 
-    <!-- Form Thêm/Sửa Tài Liệu (Chỉ hiển thị khi là Admin) -->
-    <div id="adminFormCard" class="hidden bg-white p-5 rounded-xl shadow-md border-l-4 border-red-800 space-y-4">
-      <h2 id="formTitle" class="text-lg font-bold text-red-800">Đăng Văn Bản Mới</h2>
-      <input type="hidden" id="editDocId">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input type="text" id="docTitle" placeholder="Tiêu đề văn bản" class="p-2.5 border rounded-lg w-full">
-        <input type="text" id="docNumber" placeholder="Số/Ký hiệu (VD: 390-NQ/ĐU)" class="p-2.5 border rounded-lg w-full">
-        <input type="text" id="effectiveDate" placeholder="Ngày hiệu lực (VD: 03/9/2026)" class="p-2.5 border rounded-lg w-full">
-        <input type="text" id="issuer" placeholder="Cơ quan ban hành (VD: Đảng uỷ PTM)" class="p-2.5 border rounded-lg w-full">
-        <input type="text" id="thumbnail" placeholder="Link ảnh đại diện (Tùy chọn)" class="p-2.5 border rounded-lg w-full md:col-span-2">
-        <input type="text" id="fileUrl" placeholder="Link tệp văn bản (PDF / Google Drive view link)" class="p-2.5 border rounded-lg w-full md:col-span-2">
-        <textarea id="summary" placeholder="Mô tả tóm tắt nội dung văn bản..." class="p-2.5 border rounded-lg w-full md:col-span-2 h-20"></textarea>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="saveDocument()" class="bg-red-800 text-white font-bold px-5 py-2 rounded-lg hover:bg-red-900 transition">Lưu Văn Bản</button>
-        <button onclick="resetForm()" class="bg-gray-400 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-500 transition">Hủy</button>
-      </div>
+<div class="main-container">
+    <sidebar>
+        <div class="sidebar-title">CÂY THƯ MỤC VĂN BẢN</div>
+        <div class="folder-tree">
+            <ul>
+                <li>
+                    <div class="folder-item active" onclick="filterCategory('')">
+                        <i class="fa-solid fa-folder-open"></i> Tất cả văn bản
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Đảng ủy Sư đoàn')">
+                        <i class="fa-solid fa-folder"></i> Đảng ủy Sư đoàn
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Bộ Chỉ huy Sư đoàn')">
+                        <i class="fa-solid fa-folder"></i> Bộ Chỉ huy Sư đoàn
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Phòng Tham mưu')">
+                        <i class="fa-solid fa-folder"></i> Phòng Tham mưu
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Phòng Chính trị')">
+                        <i class="fa-solid fa-folder"></i> Phòng Chính trị
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Phòng Hậu cần - Kỹ thuật')">
+                        <i class="fa-solid fa-folder"></i> Phòng Hậu cần - Kỹ thuật
+                    </div>
+                </li>
+                <li>
+                    <div class="folder-item" onclick="filterCategory('Các Đơn vị trực thuộc')">
+                        <i class="fa-solid fa-folder"></i> Các Đơn vị trực thuộc
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </sidebar>
+
+    <div class="content">
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm theo tên văn bản, số hiệu, trích yếu..." onkeyup="handleSearch()">
+            <button class="btn btn-primary" onclick="loadDocuments()"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
+        </div>
+
+        <div id="docContainer" class="doc-list">
+            <!-- Danh sách văn bản tự động nạp ở đây -->
+        </div>
     </div>
+</div>
 
-    <!-- Danh sách văn bản dạng Thẻ Báo Chí (Tối ưu tuyệt đối trên Điện thoại) -->
-    <div id="documentList" class="space-y-4"></div>
-
-  </main>
-
-  <!-- Modal Xem Tệp Văn Bản (Full màn hình Mobile) -->
-  <div id="fileModal" class="fixed inset-0 bg-black/70 hidden z-50 flex items-center justify-center p-2 md:p-6">
-    <div class="bg-white w-full max-w-5xl rounded-xl overflow-hidden flex flex-col h-[90vh]">
-      <div class="p-4 bg-red-800 text-white flex justify-between items-center">
-        <h3 id="modalDocTitle" class="font-bold truncate pr-4 text-sm md:text-base">Xem Văn Bản</h3>
-        <button onclick="closeModal()" class="text-white hover:text-gray-300 font-bold text-xl px-2">&times;</button>
-      </div>
-      <div class="flex-1 bg-gray-200 preview-container">
-        <iframe id="fileIframe" src=""></iframe>
-      </div>
+<!-- Modal Đăng / Sửa văn bản -->
+<div id="docModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle" style="margin-bottom: 20px; color: var(--primary);">Đăng Văn Bản Mới</h2>
+        <form id="docForm" onsubmit="saveDocument(event)">
+            <input type="hidden" id="docId">
+            <div class="form-group">
+                <label>Tên văn bản / Tiêu đề (*)</label>
+                <input type="text" id="title" required placeholder="Ví dụ: Nghị quyết lãnh đạo thực hiện nhiệm vụ...">
+            </div>
+            <div class="form-group">
+                <label>Số / Ký hiệu (*)</label>
+                <input type="text" id="docNumber" required placeholder="Ví dụ: 307/NQ-ĐU">
+            </div>
+            <div class="form-group">
+                <label>Cơ quan / Đơn vị ban hành</label>
+                <select id="issuer">
+                    <option value="Đảng ủy Sư đoàn">Đảng ủy Sư đoàn</option>
+                    <option value="Bộ Chỉ huy Sư đoàn">Bộ Chỉ huy Sư đoàn</option>
+                    <option value="Phòng Tham mưu">Phòng Tham mưu</option>
+                    <option value="Phòng Chính trị">Phòng Chính trị</option>
+                    <option value="Phòng Hậu cần - Kỹ thuật">Phòng Hậu cần - Kỹ thuật</option>
+                    <option value="Các Đơn vị trực thuộc">Các Đơn vị trực thuộc</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ngày ban hành / Hiệu lực</label>
+                <input type="date" id="effectiveDate">
+            </div>
+            <div class="form-group">
+                <label>Trích yếu nội dung</label>
+                <textarea id="summary" rows="3" placeholder="Tóm tắt nội dung chính của văn bản..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Link Ảnh Xem Trước (Thumbnail URL)</label>
+                <input type="text" id="thumbnail" placeholder="Dán link ảnh preview (nếu có)">
+            </div>
+            <div class="form-group">
+                <label>Link Đính Kèm File (Drive, Cloud URL) (*)</label>
+                <input type="text" id="fileUrl" required placeholder="Dán link PDF/Word/File đính kèm">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn" style="background: #cbd5e1;" onclick="closeModal()">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu Văn Bản</button>
+            </div>
+        </form>
     </div>
-  </div>
+</div>
 
-  <script>
+<!-- Modal Đổi Mật Khẩu Admin -->
+<div id="passModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <h2 style="margin-bottom: 20px; color: var(--primary);">Đổi Mật Khẩu Admin</h2>
+        <form onsubmit="changePassword(event)">
+            <div class="form-group">
+                <label>Mật khẩu hiện tại</label>
+                <input type="password" id="currentPass" required>
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu mới</label>
+                <input type="password" id="newPass" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn" style="background: #cbd5e1;" onclick="closePassModal()">Hủy</button>
+                <button type="submit" class="btn btn-primary">Xác Nhận Đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
     let isAdmin = false;
-    let searchTimeout = null;
+    let currentCategory = '';
 
-    function toggleRole() {
-      isAdmin = !isAdmin;
-      document.getElementById('authBtn').innerText = isAdmin ? 'Quyền: ADMIN (Đang bật)' : 'Quyền: User (Bấm để đổi Admin)';
-      document.getElementById('adminFormCard').classList.toggle('hidden', !isAdmin);
-      fetchDocuments();
+    // Khởi tạo
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDocuments();
+    });
+
+    // Toggle Admin
+    async function toggleAuth() {
+        if (isAdmin) {
+            isAdmin = false;
+            updateUI();
+        } else {
+            const pass = prompt("Nhập mật khẩu Admin quản trị:");
+            if (!pass) return;
+            try {
+                const res = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    isAdmin = true;
+                    updateUI();
+                    alert("Đăng nhập quyền Admin thành công!");
+                } else {
+                    alert("Mật khẩu không chính xác!");
+                }
+            } catch (err) {
+                alert("Lỗi xác thực!");
+            }
+        }
     }
 
-    async function fetchDocuments(keyword = '') {
-      const res = await fetch(`/api/documents?q=${encodeURIComponent(keyword)}`);
-      const result = await res.json();
-      if(result.success) renderDocuments(result.data);
+    function updateUI() {
+        const roleBadge = document.getElementById('roleBadge');
+        const authBtn = document.getElementById('authBtn');
+        const addDocBtn = document.getElementById('addDocBtn');
+        const changePassBtn = document.getElementById('changePassBtn');
+
+        if (isAdmin) {
+            roleBadge.innerHTML = '<i class="fa-solid fa-user-shield"></i> Quyền: Admin';
+            roleBadge.style.color = 'var(--accent)';
+            authBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Thoát Admin';
+            addDocBtn.style.display = 'flex';
+            changePassBtn.style.display = 'flex';
+        } else {
+            roleBadge.innerHTML = '<i class="fa-solid fa-user"></i> Quyền: User';
+            roleBadge.style.color = 'white';
+            authBtn.innerHTML = '<i class="fa-solid fa-key"></i> Đăng nhập Admin';
+            addDocBtn.style.display = 'none';
+            changePassBtn.style.display = 'none';
+        }
+        loadDocuments();
+    }
+
+    // Load danh sách văn bản từ Backend
+    async function loadDocuments() {
+        const q = document.getElementById('searchInput').value;
+        let url = `/api/documents?q=${encodeURIComponent(q)}`;
+        if (currentCategory) url += `&category=${encodeURIComponent(currentCategory)}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.success) {
+                renderDocuments(data.data);
+            }
+        } catch (err) {
+            console.error("Lỗi nạp dữ liệu:", err);
+        }
     }
 
     function renderDocuments(docs) {
-      const container = document.getElementById('documentList');
-      if(docs.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-gray-500 font-medium">Không tìm thấy văn bản phù hợp.</div>`;
-        return;
-      }
+        const container = document.getElementById('docContainer');
+        if (docs.length === 0) {
+            container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">Chưa có văn bản nào trong mục này.</div>`;
+            return;
+        }
 
-      container.innerHTML = docs.map(doc => `
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 flex flex-col md:flex-row hover:shadow-lg transition">
-          <div class="md:w-48 h-40 md:h-auto bg-gray-100 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
-            ${doc.thumbnail 
-              ? `<img src="${doc.thumbnail}" class="w-full h-full object-cover" alt="Preview">` 
-              : `<div class="text-center text-red-800 p-4"><i class="fa-solid fa-file-pdf text-5xl mb-1"></i><p class="text-xs font-semibold">VĂN BẢN</p></div>`}
-          </div>
-          
-          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex flex-wrap gap-2 text-xs mb-2">
-                <span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded">${doc.docNumber || 'Không số'}</span>
-                <span class="bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded"><i class="fa-regular fa-calendar-check mr-1"></i>${doc.effectiveDate || 'N/A'}</span>
-                <span class="bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded"><i class="fa-solid fa-building mr-1"></i>${doc.issuer || 'Nội bộ'}</span>
-              </div>
-              <h3 class="font-bold text-gray-900 text-base md:text-lg leading-snug mb-2">${doc.title}</h3>
-              <p class="text-gray-600 text-sm line-clamp-2">${doc.summary || 'Chưa có tóm tắt nội dung.'}</p>
-            </div>
-
-            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-              <button onclick="openFile('${doc.fileUrl}', '${escapeHtml(doc.title)}')" class="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                <i class="fa-solid fa-eye"></i> Xem tệp
-              </button>
-              
-              ${isAdmin ? `
-                <div class="flex gap-2">
-                  <button onclick="editDoc('${doc._id}', '${escapeHtml(doc.title)}', '${escapeHtml(doc.docNumber)}', '${escapeHtml(doc.effectiveDate)}', '${escapeHtml(doc.issuer)}', '${escapeHtml(doc.thumbnail || '')}', '${escapeHtml(doc.fileUrl)}', '${escapeHtml(doc.summary || '')}')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
-                    <i class="fa-solid fa-pen"></i> Sửa
-                  </button>
-                  <button onclick="deleteDoc('${doc._id}')" class="bg-gray-600 hover:bg-red-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
-                    <i class="fa-solid fa-trash"></i> Xóa
-                  </button>
+        container.innerHTML = docs.map(doc => `
+            <div class="doc-card">
+                <div>
+                    <div class="doc-header">
+                        <span class="doc-number">${doc.docNumber || 'Số KH'}</span>
+                        <span class="doc-date"><i class="fa-regular fa-calendar"></i> ${doc.effectiveDate || 'N/A'}</span>
+                    </div>
+                    <div class="doc-title">${doc.title}</div>
+                    ${doc.thumbnail ? `<img src="${doc.thumbnail}" class="doc-thumb" alt="Preview">` : ''}
+                    <div class="doc-summary">${doc.summary || 'Không có trích yếu nội dung.'}</div>
                 </div>
-              ` : ''}
+                <div class="doc-footer">
+                    <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">${doc.issuer}</span>
+                    <div class="doc-actions">
+                        <a href="${doc.fileUrl}" target="_blank" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">
+                            <i class="fa-solid fa-eye"></i> Xem Tệp
+                        </a>
+                        ${isAdmin ? `
+                            <button onclick="editDoc('${doc._id}')" class="btn" style="background:#e2e8f0; padding: 4px 8px;"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteDoc('${doc._id}')" class="btn" style="background:#fee2e2; color:var(--primary); padding: 4px 8px;"><i class="fa-solid fa-trash"></i></button>
+                        ` : ''}
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      `).join('');
+        `).join('');
+    }
+
+    function filterCategory(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        loadDocuments();
     }
 
     function handleSearch() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        const val = document.getElementById('searchInput').value;
-        fetchDocuments(val);
-      }, 300);
+        loadDocuments();
     }
 
-    async function saveDocument() {
-      const id = document.getElementById('editDocId').value;
-      const payload = {
-        title: document.getElementById('docTitle').value,
-        docNumber: document.getElementById('docNumber').value,
-        effectiveDate: document.getElementById('effectiveDate').value,
-        issuer: document.getElementById('issuer').value,
-        thumbnail: document.getElementById('thumbnail').value,
-        fileUrl: document.getElementById('fileUrl').value,
-        summary: document.getElementById('summary').value,
-      };
+    // Quản lý Modal
+    function openAddModal() {
+        document.getElementById('docId').value = '';
+        document.getElementById('docForm').reset();
+        document.getElementById('modalTitle').innerText = 'Đăng Văn Bản Mới';
+        document.getElementById('docModal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('docModal').style.display = 'none'; }
+    function openChangePassModal() { document.getElementById('passModal').style.display = 'flex'; }
+    function closePassModal() { document.getElementById('passModal').style.display = 'none'; }
 
-      const url = id ? `/api/documents/${id}` : '/api/documents';
-      const method = id ? 'PUT' : 'POST';
+    // Đăng / Sửa Văn Bản
+    async function saveDocument(e) {
+        e.preventDefault();
+        const id = document.getElementById('docId').value;
+        const payload = {
+            title: document.getElementById('title').value,
+            docNumber: document.getElementById('docNumber').value,
+            issuer: document.getElementById('issuer').value,
+            effectiveDate: document.getElementById('effectiveDate').value,
+            summary: document.getElementById('summary').value,
+            thumbnail: document.getElementById('thumbnail').value,
+            fileUrl: document.getElementById('fileUrl').value
+        };
 
-      await fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/documents/${id}` : '/api/documents';
 
-      resetForm();
-      fetchDocuments();
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal();
+                loadDocuments();
+                alert(id ? "Đã cập nhật văn bản!" : "Đã đăng văn bản thành công!");
+            }
+        } catch (err) {
+            alert("Lỗi lưu văn bản!");
+        }
     }
 
-    function editDoc(id, title, docNumber, effectiveDate, issuer, thumbnail, fileUrl, summary) {
-      document.getElementById('editDocId').value = id;
-      document.getElementById('docTitle').value = title;
-      document.getElementById('docNumber').value = docNumber;
-      document.getElementById('effectiveDate').value = effectiveDate;
-      document.getElementById('issuer').value = issuer;
-      document.getElementById('thumbnail').value = thumbnail;
-      document.getElementById('fileUrl').value = fileUrl;
-      document.getElementById('summary').value = summary;
-      
-      document.getElementById('formTitle').innerText = "Chỉnh Sửa Văn Bản";
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    async function editDoc(id) {
+        try {
+            const res = await fetch(`/api/documents?q=`);
+            const data = await res.json();
+            const doc = data.data.find(d => d._id === id);
+            if (doc) {
+                document.getElementById('docId').value = doc._id;
+                document.getElementById('title').value = doc.title;
+                document.getElementById('docNumber').value = doc.docNumber;
+                document.getElementById('issuer').value = doc.issuer;
+                document.getElementById('effectiveDate').value = doc.effectiveDate;
+                document.getElementById('summary').value = doc.summary;
+                document.getElementById('thumbnail').value = doc.thumbnail || '';
+                document.getElementById('fileUrl').value = doc.fileUrl;
+                document.getElementById('modalTitle').innerText = 'Chỉnh Sửa Văn Bản';
+                document.getElementById('docModal').style.display = 'flex';
+            }
+        } catch (err) {
+            alert("Lỗi lấy thông tin văn bản!");
+        }
     }
 
     async function deleteDoc(id) {
-      if(confirm('Anh có chắc muốn xóa văn bản này?')) {
-        await fetch(`/api/documents/${id}`, { method: 'DELETE' });
-        fetchDocuments();
-      }
+        if (!confirm("Anh có chắc chắn muốn xóa văn bản này không?")) return;
+        try {
+            const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadDocuments();
+                alert("Đã xóa văn bản!");
+            }
+        } catch (err) {
+            alert("Lỗi xóa văn bản!");
+        }
     }
 
-    function resetForm() {
-      document.getElementById('editDocId').value = '';
-      document.getElementById('docTitle').value = '';
-      document.getElementById('docNumber').value = '';
-      document.getElementById('effectiveDate').value = '';
-      document.getElementById('issuer').value = '';
-      document.getElementById('thumbnail').value = '';
-      document.getElementById('fileUrl').value = '';
-      document.getElementById('summary').value = '';
-      document.getElementById('formTitle').innerText = "Đăng Văn Bản Mới";
-    }
+    // Đổi Mật Khẩu Admin
+    async function changePassword(e) {
+        e.preventDefault();
+        const currentPass = document.getElementById('currentPass').value;
+        const newPass = document.getElementById('newPass').value;
 
-    function openFile(url, title) {
-      document.getElementById('modalDocTitle').innerText = title;
-      document.getElementById('fileIframe').src = url;
-      document.getElementById('fileModal').classList.remove('hidden');
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPass, newPass })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closePassModal();
+                alert("Đã đổi mật khẩu Admin thành công!");
+            } else {
+                alert(data.message || "Đổi mật khẩu thất bại!");
+            }
+        } catch (err) {
+            alert("Lỗi server!");
+        }
     }
-
-    function closeModal() {
-      document.getElementById('fileModal').classList.add('hidden');
-      document.getElementById('fileIframe').src = '';
-    }
-
-    function escapeHtml(str) {
-      return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
-
-    fetchDocuments();
-  </script>
+</script>
 </body>
 </html>
