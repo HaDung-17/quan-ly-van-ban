@@ -6,20 +6,21 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Phục vụ file tĩnh trong thư mục public
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Kết nối MongoDB Cloud
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Middleware tự động kết nối DB trước mỗi request
 app.use(async (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    if (MONGODB_URI) {
-      try {
-        await mongoose.connect(MONGODB_URI);
-      } catch (err) {
-        return res.status(500).json({ success: false, message: 'Lỗi kết nối CSDL: ' + err.message });
-      }
+  if (mongoose.connection.readyState !== 1 && MONGODB_URI) {
+    try {
+      await mongoose.connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000
+      });
+    } catch (err) {
+      console.error('Lỗi kết nối DB:', err);
     }
   }
   next();
@@ -39,7 +40,7 @@ const DocumentSchema = new mongoose.Schema({
 
 const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
 
-// API 1: Lấy danh sách văn bản (Tìm kiếm)
+// API 1: Lấy danh sách văn bản
 app.get('/api/documents', async (req, res) => {
   try {
     const { q } = req.query;
@@ -74,7 +75,7 @@ app.post('/api/documents', async (req, res) => {
   }
 });
 
-// API 3: Chỉnh sửa văn bản (Admin)
+// API 3: Chỉnh sửa văn bản
 app.put('/api/documents/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -85,7 +86,7 @@ app.put('/api/documents/:id', async (req, res) => {
   }
 });
 
-// API 4: Xóa văn bản (Admin)
+// API 4: Xóa văn bản
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     await Document.findByIdAndDelete(req.params.id);
@@ -95,9 +96,9 @@ app.delete('/api/documents/:id', async (req, res) => {
   }
 });
 
-// Trả về file index.html cho giao diện
+// Trả về file index.html cho trang chủ
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 module.exports = app;
