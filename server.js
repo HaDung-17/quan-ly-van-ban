@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors());
 
 // Phục vụ file tĩnh trong thư mục public
-app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Kết nối MongoDB Cloud
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -40,7 +40,7 @@ const DocumentSchema = new mongoose.Schema({
 
 const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
 
-// API 1: Lấy danh sách văn bản
+// API Lấy danh sách văn bản
 app.get('/api/documents', async (req, res) => {
   try {
     const { q } = req.query;
@@ -64,7 +64,7 @@ app.get('/api/documents', async (req, res) => {
   }
 });
 
-// API 2: Đăng văn bản mới
+// API Đăng văn bản mới
 app.post('/api/documents', async (req, res) => {
   try {
     const newDoc = new Document(req.body);
@@ -75,7 +75,7 @@ app.post('/api/documents', async (req, res) => {
   }
 });
 
-// API 3: Chỉnh sửa văn bản
+// API Chỉnh sửa văn bản
 app.put('/api/documents/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,7 +86,7 @@ app.put('/api/documents/:id', async (req, res) => {
   }
 });
 
-// API 4: Xóa văn bản
+// API Xóa văn bản
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     await Document.findByIdAndDelete(req.params.id);
@@ -98,7 +98,7 @@ app.delete('/api/documents/:id', async (req, res) => {
 
 // Trả về file index.html cho trang chủ
 app.get('*', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 module.exports = app;
