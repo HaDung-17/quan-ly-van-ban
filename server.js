@@ -1,193 +1,87 @@
 const express = require('express');
-const fs = require('fs');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
-app.set('trust proxy', true);
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-const DOCUMENTS_FILE = path.join(__dirname, 'data', 'documents.json');
+// Kết nối MongoDB Cloud
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sudoan307';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Đã kết nối MongoDB Cloud thành công'))
+  .catch(err => console.error('Lỗi kết nối DB:', err));
 
-const readJsonFile = (filePath) => {
-    try {
-        if (!fs.existsSync(filePath)) return [];
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data || '[]');
-    } catch (error) {
-        return [];
+// Schema Văn bản
+const DocumentSchema = new mongoose.Schema({
+  title: String,          // Tiêu đề văn bản
+  docNumber: String,      // Số văn bản (VD: 390-NQ/ĐU)
+  effectiveDate: String, // Ngày hiệu lực / Ngày ban hành
+  issuer: String,         // Cơ quan ban hành
+  summary: String,        // Nội dung tóm tắt / xem trước
+  thumbnail: String,      // Link ảnh đại diện/xem trước
+  fileUrl: String,        // Link tệp văn bản (PDF/Drive/Cloudinary)
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Document = mongoose.model('Document', DocumentSchema);
+
+// API 1: Lấy danh sách văn bản (Tích hợp Tìm kiếm thông minh)
+app.get('/api/documents', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = {};
+    if (q) {
+      const searchRegex = new RegExp(q, 'i');
+      query = {
+        $or: [
+          { title: searchRegex },
+          { docNumber: searchRegex },
+          { effectiveDate: searchRegex },
+          { issuer: searchRegex },
+          { summary: searchRegex }
+        ]
+      };
     }
-};
-
-const writeJsonFile = (filePath, data) => {
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (error) {
-        return false;
-    }
-};
-
-// API Đăng ký
-app.post('/api/register', (req, res) => {
-    const { username, password, fullname } = req.body;
-    if (!username || !password) return res.status(400).json({ message: 'Thiếu thông tin.' });
-
-    const users = readJsonFile(USERS_FILE);
-    if (users.find(u => u.username === username)) return res.status(400).json({ message: 'Tài khoản đã tồn tại.' });
-
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip;
-
-    const newUser = {
-        id: Date.now().toString(),
-        username,
-        password,
-        fullname: fullname || username,
-        role: users.length === 0 ? 'admin' : 'user',
-        ip: clientIp,
-        lastIp: clientIp,
-        location: 'Chưa xác định',
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString()
-    };
-
-    users.push(newUser);
-    writeJsonFile(USERS_FILE, users);
-    res.json({ message: 'Đăng ký thành công!', user: newUser });
+    const docs = await Document.find(query).sort({ createdAt: -1 });
+    res.json({ success: true, data: docs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// API Đăng nhập
-app.post('/api/login', async (req, res) => {
-    const { username, password, lat, lon } = req.body;
-    const users = readJsonFile(USERS_FILE);
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-        if (user.blocked) return res.status(403).json({ message: 'Tài khoản bị khóa.' });
-
-        const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip;
-        user.lastIp = clientIp;
-        user.lastLoginAt = new Date().toISOString();
-
-        if (lat && lon) {
-            user.location = `GPS: ${lat}, ${lon} (https://maps.google.com/?q=${lat},${lon})`;
-        } else {
-            try {
-                const geoRes = await fetch(`http://ip-api.com/json/${clientIp}?fields=status,country,regionName,city`);
-                const geoData = await geoRes.json();
-                if (geoData.status === 'success') {
-                    user.location = `${geoData.city}, ${geoData.regionName}, ${geoData.country}`;
-                } else {
-                    user.location = 'IP Nội bộ/Không xác định';
-                }
-            } catch (e) {
-                user.location = 'Lỗi định vị IP';
-            }
-        }
-
-        writeJsonFile(USERS_FILE, users);
-        res.json({ message: 'Đăng nhập thành công', user });
-    } else {
-        res.status(401).json({ message: 'Sai tài khoản hoặc mật khẩu.' });
-    }
+// API 2: Đăng văn bản mới
+app.post('/api/documents', async (req, res) => {
+  try {
+    const newDoc = new Document(req.body);
+    await newDoc.save();
+    res.json({ success: true, data: newDoc });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// API Admin lấy danh sách thành viên
-app.get('/api/admin/users', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.json(readJsonFile(USERS_FILE));
+// API 3: Chỉnh sửa văn bản (Admin)
+app.put('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedDoc = await Document.findByIdAndUpdate(id, req.body, { new: true });
+    res.json({ success: true, data: updatedDoc });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// API Admin đổi quyền
-app.post('/api/admin/change-role', (req, res) => {
-    const { userId, newRole } = req.body;
-    const users = readJsonFile(USERS_FILE);
-    const user = users.find(u => u.id === userId);
-    if (user) {
-        user.role = newRole;
-        writeJsonFile(USERS_FILE, users);
-        res.json({ message: 'Đã cập nhật quyền.' });
-    } else {
-        res.status(404).json({ message: 'Không tìm thấy user.' });
-    }
+// API 4: Xóa văn bản (Admin)
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    await Document.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Đã xóa văn bản' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// API Admin reset password
-app.post('/api/admin/reset-password', (req, res) => {
-    const { userId, newPassword } = req.body;
-    const users = readJsonFile(USERS_FILE);
-    const user = users.find(u => u.id === userId);
-    if (user) {
-        user.password = newPassword;
-        writeJsonFile(USERS_FILE, users);
-        res.json({ message: 'Đã đổi mật khẩu.' });
-    } else {
-        res.status(404).json({ message: 'Không tìm thấy user.' });
-    }
-});
-
-// API Admin xóa user
-app.post('/api/admin/delete-user', (req, res) => {
-    const { userId } = req.body;
-    let users = readJsonFile(USERS_FILE);
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== userId);
-
-    if (users.length < initialLength) {
-        writeJsonFile(USERS_FILE, users);
-        res.json({ message: 'Đã xóa tài khoản thành công.' });
-    } else {
-        res.status(404).json({ message: 'Không tìm thấy tài khoản để xóa.' });
-    }
-});
-
-// API Văn bản
-app.get('/api/documents', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.json(readJsonFile(DOCUMENTS_FILE));
-});
-
-app.post('/api/documents', (req, res) => {
-    const { title, docNumber, category, subCategory, childCategory, link, issueDate } = req.body;
-    if (!title || !docNumber) return res.status(400).json({ message: 'Thiếu thông tin văn bản.' });
-
-    const docs = readJsonFile(DOCUMENTS_FILE);
-    const newDoc = {
-        id: Date.now().toString(),
-        title,
-        docNumber,
-        category: category || '',
-        subCategory: subCategory || '',
-        childCategory: childCategory || '',
-        link: link || '#',
-        issueDate: issueDate || '',
-        createdAt: new Date().toISOString()
-    };
-
-    docs.push(newDoc);
-    writeJsonFile(DOCUMENTS_FILE, docs);
-    res.json({ message: 'Thêm văn bản thành công!', doc: newDoc });
-});
-
-// API Admin xóa văn bản
-app.post('/api/admin/delete-document', (req, res) => {
-    const { docId } = req.body;
-    let docs = readJsonFile(DOCUMENTS_FILE);
-    const initialLength = docs.length;
-    docs = docs.filter(d => d.id !== docId);
-
-    if (docs.length < initialLength) {
-        writeJsonFile(DOCUMENTS_FILE, docs);
-        res.json({ message: 'Đã xóa văn bản thành công.' });
-    } else {
-        res.status(404).json({ message: 'Không tìm thấy văn bản để xóa.' });
-    }
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server Sư đoàn 307 đang chạy tại cổng: ${PORT}`);
-});
+module.exports = app;
