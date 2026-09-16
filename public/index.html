@@ -311,6 +311,7 @@
         let selectedL3 = '';
 
         // 1. CÂY THƯ MỤC CHUẨN 3 TẦNG THEO YÊU CẦU
+        // 1. CÂY THƯ MỤC CHUẨN 3 TẦNG
         const structure = {
             BQP: {
                 BTTM: "Văn bản Bộ Tổng Tham mưu",
@@ -437,10 +438,7 @@
             if (query && query.trim() !== '') {
                 // Tìm kiếm toàn hệ thống
                 url += `?q=${encodeURIComponent(query.trim())}`;
-            } else if (selectedL1 === 'HOME') {
-                // Trang chủ: Lấy tối đa 10 tài liệu mới nhất
-                url += `?limit=10`;
-            } else {
+            } else if (selectedL1 !== 'HOME') {
                 // Các Tab chuyên mục: Lọc theo đúng 3 tầng
                 url += `?level1=${selectedL1}&level2=${selectedL2}&level3=${selectedL3}`;
             }
@@ -450,12 +448,19 @@
                 const data = await res.json();
                 grid.innerHTML = '';
 
-                if (!data.data || data.data.length === 0) {
+                let docsToRender = data.data || [];
+
+                if (docsToRender.length === 0) {
                     grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Không có văn bản nào phù hợp!</div>';
                     return;
                 }
 
-                data.data.forEach(doc => {
+                // Nếu là Trang chủ (và không tìm kiếm): Cắt lấy 10 văn bản mới nhất ngay tại Frontend
+                if (selectedL1 === 'HOME' && (!query || query.trim() === '')) {
+                    docsToRender = docsToRender.slice(0, 10);
+                }
+
+                docsToRender.forEach(doc => {
                     const col = document.createElement('div');
                     col.className = 'col-12 col-md-6 col-lg-4';
                     col.innerHTML = `
