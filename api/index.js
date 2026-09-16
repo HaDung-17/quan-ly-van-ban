@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const https = require('https');
+const http = require('http');
 
 const app = express();
 app.use(express.json());
@@ -29,17 +29,17 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'user' }, // 'admin' hoặc 'user'
+  role: { type: String, default: 'user' },
   createdAt: { type: Date, default: Date.now }
 });
 
 const DocumentSchema = new mongoose.Schema({
-  mainCat: String,      // BQP, QK, SD
-  subCat: String,       // Tên cơ quan ban hành
-  childCat: String,     // Loại văn bản (Nghị quyết, Quyết định...)
-  title: String,        // Trích yếu
-  docNumber: String,    // Số VB
-  effectiveDate: String,// Ngày ban hành
+  mainCat: String,
+  subCat: String,
+  childCat: String,
+  title: String,
+  docNumber: String,
+  effectiveDate: String,
   issuer: String,
   summary: String,
   thumbnail: String,
@@ -52,7 +52,8 @@ const AuditLogSchema = new mongoose.Schema({
   fullName: String,
   ip: String,
   country: String,
-  city: String,
+  countryCode: String,
+  locationDetail: String, // Chuỗi vị trí chi tiết (Ví dụ: Nguyễn Nghiêm, Quảng Ngãi, Việt Nam)
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -60,7 +61,6 @@ const User = mongoose.models.User || mongoose.model('User', UserSchema);
 const Document = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
 const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', AuditLogSchema);
 
-// Hàm khởi tạo Admin mặc định nếu chưa có
 async function initDefaultAdmin() {
   try {
     const adminExists = await User.findOne({ username: 'admin' });
@@ -75,7 +75,6 @@ async function initDefaultAdmin() {
   } catch (e) {}
 }
 
-// API Đăng ký người dùng
 app.post('/api/auth/register', async (req, res) => {
   try {
     await initDefaultAdmin();
@@ -98,7 +97,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// API Đăng nhập + Ghi nhận IP & GeoIP
+// API Đăng nhập + Tra cứu vị trí chi tiết nhất
 app.post('/api/auth/login', async (req, res) => {
   try {
     await initDefaultAdmin();
@@ -109,35 +108,46 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu sai!' });
     }
 
-    // Lấy IP người dùng
     let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
     if (clientIp.includes(',')) clientIp = clientIp.split(',')[0].trim();
 
-    // Tra cứu GeoIP đơn giản qua API ip-api.com
-    let country = 'VN';
-    let city = 'Vietnam';
+    let country = 'Việt Nam';
+    let countryCode = 'VN';
+    let locationDetail = 'Việt Nam';
 
     try {
       const geoRes = await new Promise((resolve) => {
-        https.get(`https://ipapi.co/${clientIp}/json/`, (resp) => {
+        http.get(`http://ip-api.com/json/${clientIp}?fields=status,country,countryCode,regionName,city,district`, (resp) => {
           let data = '';
           resp.on('data', chunk => data += chunk);
-          resp.on('end', () => resolve(JSON.parse(data)));
+          resp.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch (e) { resolve({}); }
+          });
         }).on('error', () => resolve({}));
       });
-      if (geoRes && geoRes.country_code) {
-        country = geoRes.country_code;
-        city = geoRes.city || geoRes.region || 'Vietnam';
+
+      if (geoRes && geoRes.status === 'success') {
+        country = geoRes.country || 'Việt Nam';
+        countryCode = geoRes.countryCode || 'VN';
+
+        // Ghép các cấp địa danh từ nhỏ tới lớn
+        const parts = [];
+        if (geoRes.district) parts.push(geoRes.district);
+        if (geoRes.city && geoRes.city !== geoRes.district) parts.push(geoRes.city);
+        if (geoRes.regionName && geoRes.regionName !== geoRes.city) parts.push(geoRes.regionName);
+        if (geoRes.country) parts.push(geoRes.country);
+
+        locationDetail = parts.length > 0 ? parts.join(', ') : 'Việt Nam';
       }
     } catch (e) {}
 
-    // Ghi log
     await AuditLog.create({
       username: user.username,
       fullName: user.fullName,
       ip: clientIp,
       country: country,
-      city: city
+      countryCode: countryCode,
+      locationDetail: locationDetail
     });
 
     res.json({
@@ -154,7 +164,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// API Đổi Mật Khẩu Cá Nhân
 app.post('/api/auth/change-password', async (req, res) => {
   try {
     const { userId, oldPass, newPass } = req.body;
@@ -170,7 +179,6 @@ app.post('/api/auth/change-password', async (req, res) => {
   }
 });
 
-// API Lấy danh sách văn bản (Lọc theo tab + Tìm kiếm từ khóa)
 app.get('/api/documents', async (req, res) => {
   try {
     const { mainCat, subCat, childCat, q } = req.query;
@@ -198,7 +206,6 @@ app.get('/api/documents', async (req, res) => {
   }
 });
 
-// API Lấy chi tiết 1 văn bản
 app.get('/api/documents/:id', async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id);
@@ -208,7 +215,6 @@ app.get('/api/documents/:id', async (req, res) => {
   }
 });
 
-// API Tạo văn bản
 app.post('/api/documents', async (req, res) => {
   try {
     const newDoc = new Document(req.body);
@@ -219,7 +225,6 @@ app.post('/api/documents', async (req, res) => {
   }
 });
 
-// API Cập nhật văn bản
 app.put('/api/documents/:id', async (req, res) => {
   try {
     const updatedDoc = await Document.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -229,7 +234,6 @@ app.put('/api/documents/:id', async (req, res) => {
   }
 });
 
-// API Xóa văn bản
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     await Document.findByIdAndDelete(req.params.id);
@@ -239,7 +243,6 @@ app.delete('/api/documents/:id', async (req, res) => {
   }
 });
 
-// API ADMIN: Danh sách người dùng
 app.get('/api/admin/users', async (req, res) => {
   try {
     const users = await User.find({}, '-password').sort({ createdAt: -1 });
@@ -249,7 +252,6 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-// API ADMIN: Reset pass người dùng
 app.post('/api/admin/reset-user-password', async (req, res) => {
   try {
     const { userId, newPass } = req.body;
@@ -260,7 +262,6 @@ app.post('/api/admin/reset-user-password', async (req, res) => {
   }
 });
 
-// API ADMIN: Chỉ định làm Admin mới
 app.post('/api/admin/make-admin', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -271,7 +272,6 @@ app.post('/api/admin/make-admin', async (req, res) => {
   }
 });
 
-// API ADMIN: Lịch sử đăng nhập
 app.get('/api/admin/audit-logs', async (req, res) => {
   try {
     const logs = await AuditLog.find().sort({ createdAt: -1 }).limit(100);
