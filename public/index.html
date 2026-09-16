@@ -113,7 +113,10 @@
         <!-- TẦNG 1: 3 KHỐI LỚN -->
         <ul class="nav nav-tabs nav-main-tabs mb-3 border-bottom-0" id="level1Tabs">
             <li class="nav-item">
-                <button class="nav-link active" onclick="switchLevel1('BQP')"><i class="fa-solid fa-star me-1"></i>Văn bản Bộ Quốc Phòng</button>
+                <button class="nav-link active" onclick="switchLevel1('HOME')"><i class="fa-solid fa-house me-1"></i>Trang chủ</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" onclick="switchLevel1('BQP')"><i class="fa-solid fa-star me-1"></i>Văn bản Bộ Quốc Phòng</button>
             </li>
             <li class="nav-item">
                 <button class="nav-link" onclick="switchLevel1('QK')"><i class="fa-solid fa-shield-halved me-1"></i>Văn bản Quân Khu</button>
@@ -303,7 +306,7 @@
 
     <script>
         let currentUser = JSON.parse(localStorage.getItem('user')) || null;
-        let selectedL1 = 'BQP';
+        let selectedL1 = 'HOME';
         let selectedL2 = '';
         let selectedL3 = '';
 
@@ -358,64 +361,44 @@
 
         function switchLevel1(l1) {
             selectedL1 = l1;
-            const firstL2Key = Object.keys(structure[l1])[0];
-            selectedL2 = firstL2Key;
             selectedL3 = '';
 
+            // Cập nhật trạng thái Active cho nút Menu
             document.querySelectorAll('#level1Tabs .nav-link').forEach((btn, idx) => {
-                btn.classList.toggle('active', (l1 === 'BQP' && idx === 0) || (l1 === 'QK' && idx === 1) || (l1 === 'SD' && idx === 2));
+                btn.classList.toggle('active', 
+                    (l1 === 'HOME' && idx === 0) || 
+                    (l1 === 'BQP' && idx === 1) || 
+                    (l1 === 'QK' && idx === 2) || 
+                    (l1 === 'SD' && idx === 3)
+                );
             });
 
-            renderLevel2();
-            renderLevel3();
+            if (l1 === 'HOME') {
+                // Nếu ở Trang chủ: Ẩn các sub-tab tầng 2 & tầng 3
+                document.getElementById('level2Container').innerHTML = '';
+                document.getElementById('level3Container').innerHTML = '';
+                selectedL2 = '';
+            } else {
+                // Nếu ở các khối khác: Tự động chọn tab con đầu tiên
+                const firstL2Key = Object.keys(structure[l1])[0];
+                selectedL2 = firstL2Key;
+                renderLevel2();
+                renderLevel3();
+            }
+
             loadDocuments();
-        }
-
-        function renderLevel2() {
-            const container = document.getElementById('level2Container');
-            container.innerHTML = '';
-            const options = structure[selectedL1];
-
-            Object.keys(options).forEach((key, index) => {
-                if (index === 0 && !selectedL2) selectedL2 = key;
-                const btn = document.createElement('button');
-                btn.className = `btn btn-sm sub-tab-btn ${selectedL2 === key ? 'active' : 'btn-outline-secondary'}`;
-                btn.innerText = options[key];
-                btn.onclick = () => {
-                    selectedL2 = key;
-                    renderLevel2();
-                    loadDocuments();
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function renderLevel3() {
-            const container = document.getElementById('level3Container');
-            container.innerHTML = '';
-
-            const allBtn = document.createElement('button');
-            allBtn.className = `btn btn-sm ${selectedL3 === '' ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
-            allBtn.innerText = 'Tất cả loại VB';
-            allBtn.onclick = () => { selectedL3 = ''; renderLevel3(); loadDocuments(); };
-            container.appendChild(allBtn);
-
-            level3Items.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = `btn btn-sm ${selectedL3 === item ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
-                btn.innerText = item;
-                btn.onclick = () => { selectedL3 = item; renderLevel3(); loadDocuments(); };
-                container.appendChild(btn);
-            });
         }
 
         async function loadDocuments(query = '') {
             let url;
-            const q = query ? query.trim() : '';
-
-            if (q !== '') {
-                url = `/api/documents?q=${encodeURIComponent(q)}`;
+            if (query && query.trim() !== '') {
+                // Tìm kiếm toàn bộ hệ thống
+                url = `/api/documents?q=${encodeURIComponent(query.trim())}`;
+            } else if (selectedL1 === 'HOME') {
+                // Trang chủ: Lấy 10 tài liệu mới nhất (không lọc theo level)
+                url = `/api/documents`;
             } else {
+                // Các khối khác: Lọc theo cấp đã chọn
                 url = `/api/documents?level1=${selectedL1}&level2=${selectedL2}&level3=${selectedL3}`;
             }
 
@@ -430,7 +413,13 @@
                 return;
             }
 
-            data.data.forEach(doc => {
+            // Nếu đang ở Trang chủ thì chỉ hiển thị tối đa 10 tài liệu mới nhất
+            let docsToRender = data.data;
+            if (selectedL1 === 'HOME' && (!query || query.trim() === '')) {
+                docsToRender = docsToRender.slice(0, 10);
+            }
+
+            docsToRender.forEach(doc => {
                 const col = document.createElement('div');
                 col.className = 'col-12 col-md-6 col-lg-4';
                 col.innerHTML = `
