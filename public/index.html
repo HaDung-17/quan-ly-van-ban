@@ -327,6 +327,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: pass })
                 });
+                if (!res.ok) {
+                    alert("Không kết nối được tới server API (Mã lỗi: " + res.status + ")");
+                    return;
+                }
                 const data = await res.json();
                 if (data.success) {
                     isAdmin = true;
@@ -336,7 +340,7 @@
                     alert("Mật khẩu không chính xác!");
                 }
             } catch (err) {
-                alert("Lỗi xác thực!");
+                alert("Lỗi kết nối máy chủ!");
             }
         }
     }
