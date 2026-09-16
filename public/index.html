@@ -358,7 +358,9 @@
 
         function switchLevel1(l1) {
             selectedL1 = l1;
-            selectedL2 = '';
+            // Tự động lấy Tab con đầu tiên làm mặc định để không bị trắng trang
+            const firstL2Key = Object.keys(structure[l1])[0];
+            selectedL2 = firstL2Key;
             selectedL3 = '';
 
             document.querySelectorAll('#level1Tabs .nav-link').forEach((btn, idx) => {
