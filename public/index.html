@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SƯ ĐOÀN 307 - HỆ THỐNG QUẢN LÝ VĂN BẢN</title>
 
-    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc">
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23da251d'/><polygon points='50,15 61,38 85,38 66,53 73,76 50,61 27,76 34,53 15,38 39,38' fill='%23ffff00'/></svg>">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -93,11 +91,15 @@
 </head>
 <body>
 
+    <!-- NAVBAR CHỨA LOGO -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                <img src="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc" width="38" height="38" class="me-2 rounded-circle border border-warning" alt="Logo Sư Đoàn 307" style="object-fit: cover;">
-                SƯ ĐOÀN 307 - HỆ THỐNG VĂN BẢN
+                <svg width="36" height="36" viewBox="0 0 100 100" class="me-2">
+                    <circle cx="50" cy="50" r="48" fill="#da251d" stroke="#FFC300" stroke-width="4"/>
+                    <polygon points="50,15 61,38 85,38 66,53 73,76 50,61 27,76 34,53 15,38 39,38" fill="#ffff00"/>
+                </svg>
+                <span>SƯ ĐOÀN 307</span>
             </a>
             <div class="d-flex align-items-center gap-2" id="userInfoArea"></div>
         </div>
@@ -118,10 +120,10 @@
         </ul>
 
         <div class="card shadow-sm p-3 mb-4 bg-white rounded-3">
-            <!-- TẦNG 2: SUB-TABS DỰA THEO TẦNG 1 -->
+            <!-- TẦNG 2 -->
             <div id="level2Container" class="d-flex flex-wrap gap-2 mb-2 border-bottom pb-2"></div>
 
-            <!-- TẦNG 3: NGHỊ QUYẾT, QUYẾT ĐỊNH... -->
+            <!-- TẦNG 3 -->
             <div id="level3Container" class="d-flex flex-wrap gap-1 mt-2"></div>
         </div>
 
@@ -158,7 +160,7 @@
         </div>
     </div>
 
-    <!-- MODAL CHI TIẾT VĂN BẢN / XEM FILE -->
+    <!-- MODAL CHI TIẾT VĂN BẢN -->
     <div class="modal fade" id="docDetailModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-fullscreen-sm-down">
             <div class="modal-content">
@@ -171,7 +173,7 @@
         </div>
     </div>
 
-    <!-- MODAL TẢI VĂN BẢN LÊN / SỬA -->
+    <!-- MODAL TẢI VĂN BẢN LÊN / SỬA (ĐÃ BỎ CƠ QUAN BAN HÀNH) -->
     <div class="modal fade" id="docFormModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -208,10 +210,6 @@
                                     <option value="Văn bản khác">Văn bản khác</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label font-weight-bold">Cơ quan ban hành</label>
-                            <input type="text" id="formIssuer" class="form-control" placeholder="Ví dụ: Đảng ủy PTM, BTL QK..." required>
                         </div>
                         <div class="mb-2">
                             <label class="form-label font-weight-bold">Tên văn bản (Trích yếu nội dung)</label>
@@ -427,7 +425,7 @@
                         <img src="${doc.thumbnail || 'https://images.unsplash.com/photo-1568667256549-094345857637?w=500'}" class="card-img-top thumb-img">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-danger">${doc.issuer || 'Cơ quan BH'}</span>
+                                <span class="badge bg-danger">${structure[doc.level1]?.[doc.level2] || 'Văn bản'}</span>
                                 <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i>${doc.effectiveDate || '---'}</small>
                             </div>
                             <h6 class="fw-bold text-dark text-truncate-2 mt-2" style="height: 42px; overflow: hidden;">${doc.title}</h6>
@@ -464,7 +462,7 @@
                 container.innerHTML = `
                     <div class="p-2">
                         <div class="alert alert-secondary mb-2 small">
-                            <strong>Cơ quan BH:</strong> ${doc.issuer || 'N/A'} | <strong>Số VB:</strong> ${doc.docNumber || 'N/A'} | <strong>Ngày BH:</strong> ${doc.effectiveDate || 'N/A'}
+                            <strong>Đơn vị:</strong> ${structure[doc.level1]?.[doc.level2] || 'N/A'} | <strong>Số VB:</strong> ${doc.docNumber || 'N/A'} | <strong>Ngày BH:</strong> ${doc.effectiveDate || 'N/A'}
                         </div>
                         <div class="text-center mb-2">
                             <a href="${doc.fileUrl}" target="_blank" class="btn btn-sm btn-success fw-bold"><i class="fa-solid fa-download me-1"></i>Tải về / Mở cửa sổ mới</a>
@@ -503,7 +501,6 @@
                 updateFormCategories();
                 document.getElementById('formLevel2').value = d.level2 || '';
                 document.getElementById('formLevel3').value = d.level3 || '';
-                document.getElementById('formIssuer').value = d.issuer || '';
                 document.getElementById('formTitle').value = d.title || '';
                 document.getElementById('formDocNumber').value = d.docNumber || '';
                 document.getElementById('formEffectiveDate').value = d.effectiveDate || '';
@@ -520,7 +517,6 @@
                 level1: document.getElementById('formLevel1').value,
                 level2: document.getElementById('formLevel2').value,
                 level3: document.getElementById('formLevel3').value,
-                issuer: document.getElementById('formIssuer').value,
                 title: document.getElementById('formTitle').value,
                 docNumber: document.getElementById('formDocNumber').value,
                 effectiveDate: document.getElementById('formEffectiveDate').value,
