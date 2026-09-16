@@ -408,52 +408,40 @@
             });
         }
 
-        async function loadDocuments(query = '') {
-            let url = `/api/documents?level1=${selectedL1}&level2=${selectedL2}&level3=${selectedL3}&q=${encodeURIComponent(query)}`;
-            const res = await fetch(url);
-            const data = await res.json();
+       function filterDocuments() {
+    // Lấy từ khóa người dùng nhập vào ô tìm kiếm
+    const searchInput = document.getElementById('searchInput');
+    const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-            const grid = document.getElementById('documentGrid');
-            grid.innerHTML = '';
+    // Trường hợp 1: CÓ TỪ KHÓA -> TÌM TOÀN BỘ WEB (bỏ qua mọi Tab/Phân loại)
+    if (searchKeyword !== '') {
+        const results = allDocuments.filter(doc => {
+            const title = (doc.title || doc.name || '').toLowerCase();
+            const number = (doc.number || doc.soVB || '').toLowerCase();
+            const agency = (doc.agency || doc.coQuan || '').toLowerCase();
+            const type = (doc.type || doc.loaiVB || '').toLowerCase();
 
-            if (!data.data || data.data.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Không có văn bản nào phù hợp!</div>';
-                return;
-            }
+            return title.includes(searchKeyword) || 
+                   number.includes(searchKeyword) || 
+                   agency.includes(searchKeyword) || 
+                   type.includes(searchKeyword);
+        });
 
-            data.data.forEach(doc => {
-                const col = document.createElement('div');
-                col.className = 'col-12 col-md-6 col-lg-4';
-                col.innerHTML = `
-                    <div class="card card-doc h-100 shadow-sm">
-                        <img src="${doc.thumbnail || 'https://images.unsplash.com/photo-1568667256549-094345857637?w=500'}" class="card-img-top thumb-img">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-danger">${structure[doc.level1]?.[doc.level2] || 'Văn bản'}</span>
-                                <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i>${doc.effectiveDate || '---'}</small>
-                            </div>
-                            <h6 class="fw-bold text-dark text-truncate-2 mt-2" style="height: 42px; overflow: hidden;">${doc.title}</h6>
-                            <p class="small text-secondary mb-1">Số VB: <strong>${doc.docNumber || 'Chưa rõ'}</strong></p>
-                        </div>
-                        <div class="card-footer bg-light border-0 d-flex justify-content-between align-items-center p-2">
-                            <button class="btn btn-sm btn-danger fw-bold px-3" onclick="viewDoc('${doc._id}')"><i class="fa-solid fa-file-pdf me-1"></i>Xem tệp</button>
-                            ${currentUser && currentUser.role === 'admin' ? `
-                                <div>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editDoc('${doc._id}')"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDoc('${doc._id}')"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(col);
-            });
-        }
+        renderData(results); // Hiển thị kết quả tìm kiếm trên toàn hệ thống
+        return;
+    }
 
-        function executeSearch() {
-            const q = document.getElementById('searchInput').value;
-            loadDocuments(q);
-        }
+    // Trường hợp 2: KHÔNG CÓ TỪ KHÓA -> Lọc theo từng Tab như bình thường
+    const filtered = allDocuments.filter(doc => {
+        const matchBlock = (typeof currentBlock === 'undefined' || currentBlock === 'all') || doc.block === currentBlock;
+        const matchAgency = (typeof currentAgency === 'undefined' || currentAgency === 'all') || doc.agency === currentAgency;
+        const matchType = (typeof currentType === 'undefined' || currentType === 'all') || doc.type === currentType;
+
+        return matchBlock && matchAgency && matchType;
+    });
+
+    renderData(filtered);
+}
 
         async function viewDoc(id) {
             const res = await fetch(`/api/documents/${id}`);
