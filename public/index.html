@@ -96,8 +96,8 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                <img src="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc" width="38" height="38" class="me-2 rounded-circle border border-warning">
-                SƯ ĐOÀN 307
+                <img src="https://lh3.googleusercontent.com/d/1KTHtnYQ6PT3lMe-wd1wTIcATxp4uzrpc" width="38" height="38" class="me-2 rounded-circle border border-warning" alt="Logo Sư Đoàn 307" style="object-fit: cover;">
+                SƯ ĐOÀN 307 - HỆ THỐNG VĂN BẢN
             </a>
             <div class="d-flex align-items-center gap-2" id="userInfoArea"></div>
         </div>
@@ -121,7 +121,7 @@
             <!-- TẦNG 2: SUB-TABS DỰA THEO TẦNG 1 -->
             <div id="level2Container" class="d-flex flex-wrap gap-2 mb-2 border-bottom pb-2"></div>
 
-            <!-- TẦNG 3: NGHỊ QUYẾT, QUYẾT ĐỊNH... (HIỆN KHI Ở KHỐI SƯ ĐOÀN HOẶC ĐƯỢC CHỌN) -->
+            <!-- TẦNG 3: NGHỊ QUYẾT, QUYẾT ĐỊNH... -->
             <div id="level3Container" class="d-flex flex-wrap gap-1 mt-2"></div>
         </div>
 
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ ADMIN (USERS & LOGS) -->
+    <!-- MODAL QUẢN LÝ ADMIN -->
     <div class="modal fade" id="adminManagerModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -391,7 +391,6 @@
             const container = document.getElementById('level3Container');
             container.innerHTML = '';
 
-            // Luôn cho phép lọc theo loại văn bản
             const allBtn = document.createElement('button');
             allBtn.className = `btn btn-sm ${selectedL3 === '' ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
             allBtn.innerText = 'Tất cả loại VB';
@@ -548,7 +547,6 @@
             }
         }
 
-        // AUTH & ADMIN
         function openLoginModal() {
             document.getElementById('authModalTitle').innerText = 'Đăng Nhập';
             document.getElementById('authModalBody').innerHTML = `
