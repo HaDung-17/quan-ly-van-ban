@@ -12,7 +12,6 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Middleware tự kết nối DB
 app.use(async (req, res, next) => {
   if (mongoose.connection.readyState !== 1 && MONGODB_URI) {
     try {
@@ -34,9 +33,9 @@ const UserSchema = new mongoose.Schema({
 });
 
 const DocumentSchema = new mongoose.Schema({
-  mainCat: String,
-  subCat: String,
-  childCat: String,
+  level1: String, // BQP, QK, SD
+  level2: String, // Tab cấp 2 (VD: BTM_QK, PTM, PCT...)
+  level3: String, // Tab cấp 3 (Nghị quyết, Quyết định...)
   title: String,
   docNumber: String,
   effectiveDate: String,
@@ -53,7 +52,7 @@ const AuditLogSchema = new mongoose.Schema({
   ip: String,
   country: String,
   countryCode: String,
-  locationDetail: String, // Chuỗi vị trí chi tiết (Ví dụ: Nguyễn Nghiêm, Quảng Ngãi, Việt Nam)
+  locationDetail: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -80,16 +79,9 @@ app.post('/api/auth/register', async (req, res) => {
     await initDefaultAdmin();
     const { username, fullName, password } = req.body;
     const existing = await User.findOne({ username: username.toLowerCase() });
-    if (existing) {
-      return res.json({ success: false, message: 'Tên đăng nhập đã tồn tại!' });
-    }
+    if (existing) return res.json({ success: false, message: 'Tên đăng nhập đã tồn tại!' });
 
-    const newUser = new User({
-      username: username.toLowerCase(),
-      fullName,
-      password,
-      role: 'user'
-    });
+    const newUser = new User({ username: username.toLowerCase(), fullName, password, role: 'user' });
     await newUser.save();
     res.json({ success: true, message: 'Đăng ký thành công!' });
   } catch (err) {
@@ -97,46 +89,35 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// API Đăng nhập + Tra cứu vị trí chi tiết nhất
 app.post('/api/auth/login', async (req, res) => {
   try {
     await initDefaultAdmin();
     const { username, password } = req.body;
     const user = await User.findOne({ username: username.toLowerCase(), password });
-
-    if (!user) {
-      return res.json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu sai!' });
-    }
+    if (!user) return res.json({ success: false, message: 'Tài khoản hoặc mật khẩu không chính xác!' });
 
     let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
     if (clientIp.includes(',')) clientIp = clientIp.split(',')[0].trim();
 
-    let country = 'Việt Nam';
-    let countryCode = 'VN';
-    let locationDetail = 'Việt Nam';
+    let country = 'Việt Nam', countryCode = 'VN', locationDetail = 'Việt Nam';
 
     try {
       const geoRes = await new Promise((resolve) => {
         http.get(`http://ip-api.com/json/${clientIp}?fields=status,country,countryCode,regionName,city,district`, (resp) => {
           let data = '';
           resp.on('data', chunk => data += chunk);
-          resp.on('end', () => {
-            try { resolve(JSON.parse(data)); } catch (e) { resolve({}); }
-          });
+          resp.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { resolve({}); } });
         }).on('error', () => resolve({}));
       });
 
       if (geoRes && geoRes.status === 'success') {
         country = geoRes.country || 'Việt Nam';
         countryCode = geoRes.countryCode || 'VN';
-
-        // Ghép các cấp địa danh từ nhỏ tới lớn
         const parts = [];
         if (geoRes.district) parts.push(geoRes.district);
         if (geoRes.city && geoRes.city !== geoRes.district) parts.push(geoRes.city);
         if (geoRes.regionName && geoRes.regionName !== geoRes.city) parts.push(geoRes.regionName);
         if (geoRes.country) parts.push(geoRes.country);
-
         locationDetail = parts.length > 0 ? parts.join(', ') : 'Việt Nam';
       }
     } catch (e) {}
@@ -145,19 +126,12 @@ app.post('/api/auth/login', async (req, res) => {
       username: user.username,
       fullName: user.fullName,
       ip: clientIp,
-      country: country,
-      countryCode: countryCode,
-      locationDetail: locationDetail
+      country, countryCode, locationDetail
     });
 
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        username: user.username,
-        fullName: user.fullName,
-        role: user.role
-      }
+      user: { id: user._id, username: user.username, fullName: user.fullName, role: user.role }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -181,15 +155,14 @@ app.post('/api/auth/change-password', async (req, res) => {
 
 app.get('/api/documents', async (req, res) => {
   try {
-    const { mainCat, subCat, childCat, q } = req.query;
+    const { level1, level2, level3, q } = req.query;
     let query = {};
-
-    if (mainCat) query.mainCat = mainCat;
-    if (subCat) query.subCat = subCat;
-    if (childCat) query.childCat = childCat;
+    if (level1) query.level1 = level1;
+    if (level2) query.level2 = level2;
+    if (level3) query.level3 = level3;
 
     if (q) {
-      const regex = new RegExp(q, 'i');
+      const regex = new RegExp(q.trim(), 'i');
       query.$or = [
         { title: regex },
         { docNumber: regex },
@@ -237,9 +210,9 @@ app.put('/api/documents/:id', async (req, res) => {
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     await Document.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: 'Đã xóa văn bản!' });
+    res.json({ success: true, message: 'Đã xóa!' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false });
   }
 });
 
@@ -256,7 +229,7 @@ app.post('/api/admin/reset-user-password', async (req, res) => {
   try {
     const { userId, newPass } = req.body;
     await User.findByIdAndUpdate(userId, { password: newPass });
-    res.json({ success: true, message: 'Đã cập nhật mật khẩu thành công!' });
+    res.json({ success: true, message: 'Cập nhật mật khẩu thành công!' });
   } catch (err) {
     res.status(500).json({ success: false });
   }
@@ -266,7 +239,7 @@ app.post('/api/admin/make-admin', async (req, res) => {
   try {
     const { userId } = req.body;
     await User.findByIdAndUpdate(userId, { role: 'admin' });
-    res.json({ success: true, message: 'Đã chỉ định quyền Admin thành công!' });
+    res.json({ success: true, message: 'Đã chỉ định Admin thành công!' });
   } catch (err) {
     res.status(500).json({ success: false });
   }
