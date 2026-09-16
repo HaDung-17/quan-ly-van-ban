@@ -310,60 +310,45 @@
         let selectedL2 = '';
         let selectedL3 = '';
 
+        // 1. CÂY THƯ MỤC CHUẨN 3 TẦNG THEO YÊU CẦU
         const structure = {
-            'BQP': {
-                'BQP_BTTM': 'Văn bản Bộ Tổng Tham mưu',
-                'BQP_TCCT': 'Văn bản Tổng Cục Chính trị',
-                'BQP_HCKT': 'Văn bản Tổng Cục HC-KT'
+            BQP: {
+                BTTM: "Văn bản Bộ Tổng Tham mưu",
+                TCCT: "Văn bản Tổng Cục Chính trị",
+                HCKT: "Văn bản Tổng Cục HC-KT"
             },
-            'QK': {
-                'QK_BTL': 'Văn bản BTL QK',
-                'QK_BTM': 'Văn bản Bộ Tham mưu QK',
-                'QK_CCT': 'Văn bản Cục Chính trị',
-                'QK_CHCKT': 'Văn Bản Cục HC-KT'
+            QK: {
+                BTL: "Văn bản BTL QK",
+                BTM: "Văn bản Bộ Tham mưu QK",
+                CCT: "Văn bản Cục Chính trị",
+                CHC: "Văn bản Cục HC-KT"
             },
-            'SD': {
-                'SD_SD': 'Văn bản SĐ',
-                'SD_PTM': 'Văn bản PTM',
-                'SD_PCT': 'Văn bản PCT',
-                'SD_PHCKT': 'Văn bản Phòng HC-KT',
-                'SD_OTHER': 'Văn bản khác'
+            SD: {
+                SD: "Văn bản SĐ",
+                PTM: "Văn bản PTM",
+                PCT: "Văn bản PCT",
+                PHCKT: "Văn bản Phòng HC-KT",
+                OTHER: "Văn bản khác"
             }
         };
 
-        const level3Items = ['Nghị quyết', 'Quyết định', 'Chỉ thị', 'Quy định', 'Chuyên đề', 'Thông báo', 'Văn bản khác'];
+        const level3Items = ["Nghị quyết", "Quyết định", "Chỉ thị", "Quy định", "Chuyên đề", "Thông báo", "Văn bản khác"];
 
+        let selectedL1 = 'HOME';
+        let selectedL2 = '';
+        let selectedL3 = '';
+
+        // Tự động chạy khi tải xong trang web
         document.addEventListener('DOMContentLoaded', () => {
-            renderHeader();
-            switchLevel1('BQP');
+            switchLevel1('HOME');
         });
 
-        function renderHeader() {
-            const area = document.getElementById('userInfoArea');
-            const adminBtn = document.getElementById('adminActionButton');
-
-            if (currentUser) {
-                area.innerHTML = `
-                    <span class="text-white small me-1"><i class="fa-solid fa-user me-1"></i>${currentUser.fullName}</span>
-                    <button class="btn btn-sm btn-outline-warning" onclick="openChangePassModal()"><i class="fa-solid fa-key"></i></button>
-                    ${currentUser.role === 'admin' ? '<button class="btn btn-sm btn-warning fw-bold" onclick="openAdminManager()"><i class="fa-solid fa-shield"></i> Quản lý</button>' : ''}
-                    <button class="btn btn-sm btn-light" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></button>
-                `;
-                adminBtn.innerHTML = currentUser.role === 'admin' ? `<button class="btn btn-success fw-bold w-100" onclick="openAddDocModal()"><i class="fa-solid fa-plus me-1"></i>Thêm văn bản</button>` : '';
-            } else {
-                area.innerHTML = `
-                    <button class="btn btn-sm btn-outline-light" onclick="openLoginModal()">Đăng nhập</button>
-                    <button class="btn btn-sm btn-warning fw-bold" onclick="openRegisterModal()">Đăng ký</button>
-                `;
-                adminBtn.innerHTML = '';
-            }
-        }
-
+        // 2. CHUYỂN MỤC CHÍNH (LEVEL 1)
         function switchLevel1(l1) {
             selectedL1 = l1;
             selectedL3 = '';
 
-            // Cập nhật trạng thái Active cho nút Menu
+            // Cập nhật trạng thái Active trên Menu chính
             document.querySelectorAll('#level1Tabs .nav-link').forEach((btn, idx) => {
                 btn.classList.toggle('active', 
                     (l1 === 'HOME' && idx === 0) || 
@@ -374,78 +359,132 @@
             });
 
             if (l1 === 'HOME') {
-                // Nếu ở Trang chủ: Ẩn các sub-tab tầng 2 & tầng 3
+                // Trang chủ: Xóa và ẩn các Tab con
                 document.getElementById('level2Container').innerHTML = '';
                 document.getElementById('level3Container').innerHTML = '';
                 selectedL2 = '';
             } else {
-                // Nếu ở các khối khác: Tự động chọn tab con đầu tiên
-                const firstL2Key = Object.keys(structure[l1])[0];
-                selectedL2 = firstL2Key;
-                renderLevel2();
-                renderLevel3();
+                // Các khối khác: Chọn Tab cấp 2 đầu tiên & render cả 2 tầng con
+                if (structure[l1]) {
+                    selectedL2 = Object.keys(structure[l1])[0];
+                    renderLevel2();
+                    renderLevel3();
+                }
             }
 
             loadDocuments();
         }
 
-        async function loadDocuments(query = '') {
-            let url;
-            if (query && query.trim() !== '') {
-                // Tìm kiếm toàn bộ hệ thống
-                url = `/api/documents?q=${encodeURIComponent(query.trim())}`;
-            } else if (selectedL1 === 'HOME') {
-                // Trang chủ: Lấy 10 tài liệu mới nhất (không lọc theo level)
-                url = `/api/documents`;
-            } else {
-                // Các khối khác: Lọc theo cấp đã chọn
-                url = `/api/documents?level1=${selectedL1}&level2=${selectedL2}&level3=${selectedL3}`;
-            }
+        // 3. RENDER TAB CẤP 2 (LEVEL 2)
+        function renderLevel2() {
+            const container = document.getElementById('level2Container');
+            container.innerHTML = '';
+            if (!structure[selectedL1]) return;
 
-            const res = await fetch(url);
-            const data = await res.json();
-
-            const grid = document.getElementById('documentGrid');
-            grid.innerHTML = '';
-
-            if (!data.data || data.data.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Không có văn bản nào phù hợp!</div>';
-                return;
-            }
-
-            // Nếu đang ở Trang chủ thì chỉ hiển thị tối đa 10 tài liệu mới nhất
-            let docsToRender = data.data;
-            if (selectedL1 === 'HOME' && (!query || query.trim() === '')) {
-                docsToRender = docsToRender.slice(0, 10);
-            }
-
-            docsToRender.forEach(doc => {
-                const col = document.createElement('div');
-                col.className = 'col-12 col-md-6 col-lg-4';
-                col.innerHTML = `
-                    <div class="card card-doc h-100 shadow-sm">
-                        <img src="${doc.thumbnail || 'https://images.unsplash.com/photo-1568667256549-094345857637?w=500'}" class="card-img-top thumb-img">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-danger">${structure[doc.level1]?.[doc.level2] || 'Văn bản'}</span>
-                                <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i>${doc.effectiveDate || '---'}</small>
-                            </div>
-                            <h6 class="fw-bold text-dark text-truncate-2 mt-2" style="height: 42px; overflow: hidden;">${doc.title}</h6>
-                            <p class="small text-secondary mb-1">Số VB: <strong>${doc.docNumber || 'Chưa rõ'}</strong></p>
-                        </div>
-                        <div class="card-footer bg-light border-0 d-flex justify-content-between align-items-center p-2">
-                            <button class="btn btn-sm btn-danger fw-bold px-3" onclick="viewDoc('${doc._id}')"><i class="fa-solid fa-file-pdf me-1"></i>Xem tệp</button>
-                            ${currentUser && currentUser.role === 'admin' ? `
-                                <div>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editDoc('${doc._id}')"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDoc('${doc._id}')"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(col);
+            Object.keys(structure[selectedL1]).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm ${selectedL2 === key ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
+                btn.innerText = structure[selectedL1][key];
+                btn.onclick = () => {
+                    selectedL2 = key;
+                    selectedL3 = '';
+                    renderLevel2();
+                    renderLevel3();
+                    loadDocuments();
+                };
+                container.appendChild(btn);
             });
+        }
+
+        // 4. RENDER TAB CẤP 3 (LEVEL 3)
+        function renderLevel3() {
+            const container = document.getElementById('level3Container');
+            container.innerHTML = '';
+            if (selectedL1 === 'HOME') return;
+
+            // Nút "Tất cả loại VB"
+            const allBtn = document.createElement('button');
+            allBtn.className = `btn btn-sm ${selectedL3 === '' ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
+            allBtn.innerText = 'Tất cả loại VB';
+            allBtn.onclick = () => {
+                selectedL3 = '';
+                renderLevel3();
+                loadDocuments();
+            };
+            container.appendChild(allBtn);
+
+            // Các loại VB: Nghị quyết, Quyết định, Chỉ thị...
+            level3Items.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm ${selectedL3 === item ? 'btn-danger' : 'btn-outline-dark'} me-1 mb-1`;
+                btn.innerText = item;
+                btn.onclick = () => {
+                    selectedL3 = item;
+                    renderLevel3();
+                    loadDocuments();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 5. TẢI DỮ LIỆU TỪ SERVER (LOAD DOCUMENTS)
+        async function loadDocuments(query = '') {
+            const grid = document.getElementById('documentGrid');
+            grid.innerHTML = '<div class="col-12 text-center text-secondary py-5"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu...</div>';
+
+            let url = '/api/documents';
+            
+            if (query && query.trim() !== '') {
+                // Tìm kiếm toàn hệ thống
+                url += `?q=${encodeURIComponent(query.trim())}`;
+            } else if (selectedL1 === 'HOME') {
+                // Trang chủ: Lấy tối đa 10 tài liệu mới nhất
+                url += `?limit=10`;
+            } else {
+                // Các Tab chuyên mục: Lọc theo đúng 3 tầng
+                url += `?level1=${selectedL1}&level2=${selectedL2}&level3=${selectedL3}`;
+            }
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                grid.innerHTML = '';
+
+                if (!data.data || data.data.length === 0) {
+                    grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Không có văn bản nào phù hợp!</div>';
+                    return;
+                }
+
+                data.data.forEach(doc => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12 col-md-6 col-lg-4';
+                    col.innerHTML = `
+                        <div class="card card-doc h-100 shadow-sm">
+                            <img src="${doc.thumbnail || 'https://images.unsplash.com/photo-1568667256549-094345857637?w=500'}" class="card-img-top thumb-img">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge bg-danger">${structure[doc.level1]?.[doc.level2] || 'Văn bản'}</span>
+                                    <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i>${doc.effectiveDate || '---'}</small>
+                                </div>
+                                <h6 class="fw-bold text-dark text-truncate-2 mt-2" style="height: 42px; overflow: hidden;">${doc.title}</h6>
+                                <p class="small text-secondary mb-1">Số VB: <strong>${doc.docNumber || 'Chưa rõ'}</strong></p>
+                            </div>
+                            <div class="card-footer bg-light border-0 d-flex justify-content-between align-items-center p-2">
+                                <button class="btn btn-sm btn-danger fw-bold px-3" onclick="viewDoc('${doc._id}')"><i class="fa-solid fa-file-pdf me-1"></i>Xem tệp</button>
+                                ${currentUser && currentUser.role === 'admin' ? `
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editDoc('${doc._id}')"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDoc('${doc._id}')"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(col);
+                });
+            } catch (err) {
+                grid.innerHTML = '<div class="col-12 text-center text-danger py-5">Lỗi kết nối máy chủ!</div>';
+            }
         }
 
         function executeSearch() {
