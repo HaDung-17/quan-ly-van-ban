@@ -19,16 +19,13 @@
 </head>
 <body>
 
-    <!-- NAVBAR & AUTHENTICATION -->
+    <!-- NAVBAR -->
     <nav class="navbar navbar-custom shadow-sm mb-4">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand text-white fw-bold d-flex align-items-center" href="#">
                 <i class="fa-solid fa-star text-warning me-2 fs-4"></i> SƯ ĐOÀN 307
             </a>
-            <div id="authContainer">
-                <button class="btn btn-sm btn-outline-light me-1" onclick="openModal('loginModal')">Đăng nhập</button>
-                <button class="btn btn-sm btn-warning fw-bold" onclick="openModal('registerModal')">Đăng ký</button>
-            </div>
+            <div id="authContainer"></div>
         </div>
     </nav>
 
@@ -66,7 +63,7 @@
         <div class="row g-3" id="documentGrid"></div>
     </div>
 
-    <!-- MODAL DĂNG NHẬP -->
+    <!-- MODAL ĐĂNG NHẬP -->
     <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -75,32 +72,13 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <label class="form-label font-weight-bold">Tên tài khoản (Gõ <strong>admin</strong> để dùng quyền Admin)</label>
                     <input type="text" id="loginUser" class="form-control mb-2" placeholder="Tên đăng nhập">
                     <input type="password" id="loginPass" class="form-control mb-2" placeholder="Mật khẩu">
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button class="btn btn-danger" onclick="handleLogin()">Đăng nhập</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL ĐĂNG KÝ -->
-    <div class="modal fade" id="registerModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fw-bold">Đăng ký tài khoản</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" id="regUser" class="form-control mb-2" placeholder="Tên đăng nhập">
-                    <input type="password" id="regPass" class="form-control mb-2" placeholder="Mật khẩu">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button class="btn btn-danger" onclick="handleRegister()">Đăng ký</button>
                 </div>
             </div>
         </div>
@@ -145,13 +123,12 @@
             const container = document.getElementById('authContainer');
             if (currentUser) {
                 container.innerHTML = `
-                    <span class="text-white me-2">Xin chào, <strong>${currentUser.username}</strong> (${currentUser.role})</span>
+                    <span class="text-white me-2">Xin chào, <strong>${currentUser.username}</strong> (${currentUser.role === 'admin' ? 'Quản trị viên' : 'Người dùng'})</span>
                     <button class="btn btn-sm btn-outline-light" onclick="handleLogout()">Đăng xuất</button>
                 `;
             } else {
                 container.innerHTML = `
-                    <button class="btn btn-sm btn-outline-light me-1" onclick="openModal('loginModal')">Đăng nhập</button>
-                    <button class="btn btn-sm btn-warning fw-bold" onclick="openModal('registerModal')">Đăng ký</button>
+                    <button class="btn btn-sm btn-warning fw-bold" onclick="openModal('loginModal')"><i class="fa-solid fa-right-to-bracket me-1"></i>Đăng nhập</button>
                 `;
             }
         }
@@ -161,16 +138,11 @@
         }
 
         function handleLogin() {
-            const username = document.getElementById('loginUser').value;
+            const username = document.getElementById('loginUser').value.trim();
             if (!username) return alert('Vui lòng nhập tên đăng nhập');
-            currentUser = { username: username, role: username === 'admin' ? 'admin' : 'user' };
+            currentUser = { username: username, role: username.toLowerCase() === 'admin' ? 'admin' : 'user' };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             location.reload();
-        }
-
-        function handleRegister() {
-            alert('Đăng ký thành công! Hãy đăng nhập.');
-            bootstrap.Modal.getInstance(document.getElementById('registerModal')).hide();
         }
 
         function handleLogout() {
@@ -256,31 +228,45 @@
 
         async function loadDocuments(query = '') {
             const grid = document.getElementById('documentGrid');
-            grid.innerHTML = '<div class="col-12 text-center text-secondary py-5"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu...</div>';
 
-            let url = '/api/documents';
-            if (query && query.trim() !== '') {
-                url += `?q=${encodeURIComponent(query.trim())}`;
-            } else if (selectedL1 !== 'HOME') {
-                url += `?level1=${selectedL1}`;
+            // KHIỂM TRA ĐĂNG NHẬP: Chưa đăng nhập không cho xem bất kỳ nội dung nào
+            if (!currentUser) {
+                grid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fa-solid fa-lock text-danger fs-1 mb-3"></i>
+                        <h5 class="fw-bold text-dark">Bạn chưa đăng nhập!</h5>
+                        <p class="text-secondary">Vui lòng đăng nhập tài khoản để truy cập hệ thống quản lý văn bản.</p>
+                        <button class="btn btn-danger fw-bold" onclick="openModal('loginModal')">Đăng nhập ngay</button>
+                    </div>
+                `;
+                return;
             }
 
+            grid.innerHTML = '<div class="col-12 text-center text-secondary py-5"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu...</div>';
+
             try {
-                const res = await fetch(url);
+                // Tải toàn bộ dữ liệu về Client để lọc chính xác 100%
+                const res = await fetch('/api/documents');
                 const data = await res.json();
                 grid.innerHTML = '';
 
                 let docs = data.data || [];
 
-                // LỌC DỮ LIỆU THÔNG MINH (Chấp nhận cả mã ngắn TCCT lẫn tên dài Văn bản Tổng cục...)
-                if (selectedL1 !== 'HOME' && !query) {
+                // LỌC DỮ LIỆU
+                if (query && query.trim() !== '') {
+                    const q = query.trim().toLowerCase();
+                    docs = docs.filter(d => (d.title && d.title.toLowerCase().includes(q)) || (d.docNumber && d.docNumber.toLowerCase().includes(q)));
+                } else if (selectedL1 !== 'HOME') {
                     const currentL2Text = structure[selectedL1][selectedL2];
                     docs = docs.filter(doc => {
-                        const matchL2 = doc.level2 === selectedL2 || doc.level2 === currentL2Text;
+                        const matchL1 = doc.level1 === selectedL1;
+                        // Khớp mã ngắn (TCCT) HOẶC tên đầy đủ ("Văn bản Tổng Cục Chính trị")
+                        const matchL2 = doc.level2 === selectedL2 || doc.level2 === currentL2Text || (doc.level2 && doc.level2.includes("Chính trị"));
                         const matchL3 = !selectedL3 || doc.level3 === selectedL3;
-                        return matchL2 && matchL3;
+                        return matchL1 && matchL2 && matchL3;
                     });
-                } else if (selectedL1 === 'HOME' && (!query || query.trim() === '')) {
+                } else {
+                    // Trang chủ: 10 bài mới nhất
                     docs = docs.slice(0, 10);
                 }
 
@@ -306,7 +292,7 @@
                             </div>
                             <div class="card-footer bg-light border-0 d-flex justify-content-between align-items-center p-2">
                                 <a href="${fileTarget}" target="_blank" class="btn btn-sm btn-danger fw-bold px-3"><i class="fa-solid fa-file-pdf me-1"></i>Xem tệp</a>
-                                ${currentUser && currentUser.role === 'admin' ? `
+                                ${currentUser.role === 'admin' ? `
                                     <div>
                                         <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
                                         <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
