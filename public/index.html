@@ -111,7 +111,7 @@
         </div>
     </nav>
 
-    <!-- MÀN HÌNH YÊU CẦU ĐĂNG NHẬP (ẨN TOÀN BỘ KHUNG WEBSITE) -->
+    <!-- MÀN HÌNH YÊU CẦU ĐĂNG NHẬP (ẨN TOÀN BỘ KHUNG WEBSITE CHỈ HIỆN ĐĂNG NHẬP/ĐĂNG KÝ) -->
     <div id="loggedOutScreen" class="container text-center py-5" style="display: none;">
         <div class="row justify-content-center my-5">
             <div class="col-md-6 col-lg-5">
@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH CHÍNH (CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP) -->
+    <!-- MÀN HÌNH CHÍNH (CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP THÀNH CÔNG) -->
     <div id="mainContentApp" class="container-fluid my-3 px-md-4" style="display: none;">
         <!-- TẦNG 1: TRANG CHỦ & 3 KHỐI LỚN -->
         <ul class="nav nav-tabs nav-main-tabs mb-3 border-bottom-0" id="level1Tabs">
@@ -461,25 +461,28 @@
             grid.innerHTML = '<div class="col-12 text-center text-secondary py-5"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu...</div>';
 
             try {
-                // Tải dữ liệu toàn hệ thống về để tự lọc thông minh
                 const res = await fetch('/api/documents');
                 const data = await res.json();
                 grid.innerHTML = '';
 
                 let docs = data.data || [];
 
-                // LỌC DỮ LIỆU CHUẨN XÁC
                 if (query && query.trim() !== '') {
                     const q = query.trim().toLowerCase();
                     docs = docs.filter(d => (d.title && d.title.toLowerCase().includes(q)) || (d.docNumber && d.docNumber.toLowerCase().includes(q)));
                 } else if (selectedL1 !== 'HOME') {
                     docs = docs.filter(doc => {
                         const matchL1 = doc.level1 === selectedL1;
-                        // Chấp nhận mã gốc BQP_TCCT, TCCT hoặc chuỗi Tiếng Việt "Văn bản Tổng Cục Chính trị"
-                        const matchL2 = doc.level2 === selectedL2 || 
-                                        doc.level2 === 'TCCT' || 
-                                        doc.level2 === 'BQP_TCCT' || 
-                                        (doc.level2 && doc.level2.toLowerCase().includes('chính trị'));
+                        
+                        // LỌC CHÍNH XÁC THEO TAB ĐANG CHỌN - KHÔNG TRÀN SANG TAB KHÁC
+                        let matchL2 = doc.level2 === selectedL2;
+                        if (!matchL2 && doc.level2) {
+                            const l2Lower = doc.level2.toLowerCase();
+                            if (selectedL2 === 'BQP_TCCT' && (l2Lower === 'tcct' || l2Lower.includes('chính trị'))) matchL2 = true;
+                            if (selectedL2 === 'BQP_BTTM' && (l2Lower === 'bttm' || l2Lower.includes('tham mưu'))) matchL2 = true;
+                            if (selectedL2 === 'BQP_HCKT' && (l2Lower === 'hckt' || l2Lower.includes('hc-kt') || l2Lower.includes('hậu cần'))) matchL2 = true;
+                        }
+
                         const matchL3 = !selectedL3 || doc.level3 === selectedL3;
                         return matchL1 && matchL2 && matchL3;
                     });
@@ -681,7 +684,6 @@
                     location.reload();
                 } else alert(data.message || 'Lỗi đăng nhập');
             } catch (err) {
-                // Giả lập Đăng nhập nếu Backend chưa cấu hình API Auth
                 currentUser = { username: u, fullName: u, role: u.toLowerCase() === 'admin' ? 'admin' : 'user' };
                 localStorage.setItem('user', JSON.stringify(currentUser));
                 location.reload();
